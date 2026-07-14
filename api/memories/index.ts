@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
-    const user = requireAdmin(req, res);
+    const user = requireAuth(req, res);
     if (!user) return;
 
     const { date, title, note, flowerId, mood, weather, music, tags, photos, isDraft } = req.body;

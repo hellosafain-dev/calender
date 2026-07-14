@@ -200,7 +200,7 @@ app.get('/api/memories', (req, res) => {
   });
 });
 
-app.post('/api/memories', protect, requireAdmin, (req, res) => {
+app.post('/api/memories', protect, (req, res) => {
   const parse = MemoryCreateSchema.safeParse(req.body);
   if (!parse.success) {
     return res.status(400).json({ error: 'Validation failed', details: parse.error.flatten() });
@@ -238,7 +238,7 @@ app.post('/api/memories', protect, requireAdmin, (req, res) => {
   res.json({ success: true, memory: rowToMemory(created) });
 });
 
-app.put('/api/memories/:id', protect, requireAdmin, (req, res) => {
+app.put('/api/memories/:id', protect, (req, res) => {
   const { id } = req.params;
   const existing = memoryQueries.getById.get(id) as any;
   if (!existing) return res.status(404).json({ error: 'Memory not found' });
@@ -270,7 +270,7 @@ app.put('/api/memories/:id', protect, requireAdmin, (req, res) => {
   res.json({ success: true, memory: rowToMemory(updated) });
 });
 
-app.post('/api/memories/:id/delete', protect, requireAdmin, (req, res) => {
+app.post('/api/memories/:id/delete', protect, (req, res) => {
   const { id } = req.params;
   const existing = memoryQueries.getById.get(id);
   if (!existing) return res.status(404).json({ error: 'Memory not found' });
@@ -293,7 +293,7 @@ app.get('/api/reminders', (req, res) => {
   res.json(rows.map(rowToReminder));
 });
 
-app.post('/api/reminders', protect, requireAdmin, (req, res) => {
+app.post('/api/reminders', protect, (req, res) => {
   const parse = ReminderSchema.safeParse(req.body);
   if (!parse.success) {
     return res.status(400).json({ error: 'Validation failed', details: parse.error.flatten() });
@@ -307,7 +307,7 @@ app.post('/api/reminders', protect, requireAdmin, (req, res) => {
   res.json({ success: true, reminder: rowToReminder(created) });
 });
 
-app.put('/api/reminders/:id', protect, requireAdmin, (req, res) => {
+app.put('/api/reminders/:id', protect, (req, res) => {
   const { id } = req.params;
   const existing = reminderQueries.getById.get(id) as any;
   if (!existing) return res.status(404).json({ error: 'Reminder not found' });
@@ -332,7 +332,7 @@ app.put('/api/reminders/:id', protect, requireAdmin, (req, res) => {
   res.json({ success: true, reminder: rowToReminder(updated) });
 });
 
-app.delete('/api/reminders/:id', protect, requireAdmin, (req, res) => {
+app.delete('/api/reminders/:id', protect, (req, res) => {
   const { id } = req.params;
   const existing = reminderQueries.getById.get(id);
   if (!existing) return res.status(404).json({ error: 'Reminder not found' });
@@ -454,7 +454,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-app.post('/api/upload', protect, requireAdmin, upload.single('photo'), (req: any, res) => {
+app.post('/api/upload', protect, upload.single('photo'), (req: any, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }

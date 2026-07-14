@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── Update Memory (PUT) ────────────────────────────────────────────────────
   if (req.method === 'PUT') {
-    const user = requireAdmin(req, res);
+    const user = requireAuth(req, res);
     if (!user) return;
 
     const { data: existing, error: fetchError } = await supabase.from('memories').select('*').eq('id', id).single();
@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (action === 'delete') {
-      const user = requireAdmin(req, res);
+      const user = requireAuth(req, res);
       if (!user) return;
 
       const { error } = await supabase.from('memories').delete().eq('id', id);
@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── Standard Delete (DELETE) ──────────────────────────────────────────────
   if (req.method === 'DELETE') {
-    const user = requireAdmin(req, res);
+    const user = requireAuth(req, res);
     if (!user) return;
 
     const { error } = await supabase.from('memories').delete().eq('id', id);

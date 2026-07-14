@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Heart, CloudSun, Music, Tag, Calendar as Cal
 import { Memory, Reminder } from "../types.js";
 import { ThemeConfig, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
+import { fetchCurrentWeather, WeatherInfo } from "../lib/weather.js";
 
 interface CalendarPageProps {
   memories: Memory[];
@@ -57,12 +58,14 @@ export default function CalendarPage({
   });
   const [loadingQuote, setLoadingQuote] = useState(false);
 
-  // Load a beautiful quote from Gemini on mount
+  // Smart Weather Forecast State
+  const [weather, setWeather] = useState<WeatherInfo | null>(null);
+
+  // Load a beautiful quote from Gemini and current weather on mount
   useEffect(() => {
     async function loadQuote() {
       setLoadingQuote(true);
       try {
-        // Try to generate a quote matching today's mood
         const quote = await API.getGeminiQuote("peaceful", "rose");
         setPoeticQuote(quote);
       } catch (err) {
@@ -71,7 +74,16 @@ export default function CalendarPage({
         setLoadingQuote(false);
       }
     }
+    async function loadWeather() {
+      try {
+        const info = await fetchCurrentWeather();
+        setWeather(info);
+      } catch (err) {
+        console.error("Failed to load weather forecast:", err);
+      }
+    }
     loadQuote();
+    loadWeather();
   }, []);
 
   // Convert a YYYY-MM-DD string to a unique day index (relative to October 18, currentYear)
@@ -175,9 +187,10 @@ export default function CalendarPage({
 
   const getGreeting = () => {
     const hrs = today.getHours();
-    if (hrs < 12) return "Good morning, my sweet";
-    if (hrs < 17) return "Good afternoon, love";
-    return "Good evening, beautiful";
+    const name = session.username ? session.username.split(" ")[0] : "love";
+    if (hrs < 12) return `Good morning, ${name} 🌸`;
+    if (hrs < 17) return `Good afternoon, ${name} ✨`;
+    return `Good evening, ${name} 💕`;
   };
 
   // Check if date str has a memory
@@ -386,13 +399,25 @@ export default function CalendarPage({
             transition={{ duration: 0.5, delay: 0.1 }}
             className={`rounded-3xl p-5 ${theme.card} ${theme.shadow} border flex flex-col justify-between`}
           >
-            <div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.textSecondary}`}>
-                {today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-              </span>
-              <h3 className={`text-xl font-bold font-sans mt-1 ${theme.textPrimary}`}>
-                {getGreeting()}
-              </h3>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.textSecondary}`}>
+                  {today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                </span>
+                <h3 className={`text-xl font-bold font-sans mt-1 ${theme.textPrimary}`}>
+                  {getGreeting()}
+                </h3>
+              </div>
+              {weather && (
+                <div className="text-right shrink-0 flex flex-col items-end select-none">
+                  <span className="text-3xl filter drop-shadow hover:scale-110 active:scale-95 transition-all duration-300 cursor-help" title={weather.description}>
+                    {weather.symbol}
+                  </span>
+                  <span className={`text-[10px] font-bold ${theme.textSecondary} mt-0.5`}>
+                    {weather.temp}°C
+                  </span>
+                </div>
+              )}
             </div>
             
             {/* Quote of the Day */}
@@ -463,7 +488,7 @@ export default function CalendarPage({
                 <p className={`text-xs ${theme.textSecondary} leading-relaxed`}>
                   No memory planted for today yet. Shall we make this day blossom?
                 </p>
-                {session.role === "admin" && (
+                {session.role !== null && (
                   <button
                     id="plant-today-btn"
                     onClick={() => onNavigateToSettingsWithDate(todayDateStr)}
@@ -663,8 +688,8 @@ export default function CalendarPage({
                   <strong>{FLOWERS[selectedMemory.flowerId]?.name} Sentiment:</strong> {FLOWERS[selectedMemory.flowerId]?.meaning}
                 </div>
 
-                {/* Admin edit/navigation shortcut */}
-                {session.role === "admin" && (
+                {/* Admin/Viewer edit/navigation shortcut */}
+                {session.role !== null && (
                   <button
                     onClick={() => {
                       onNavigateToSettingsWithDate(selectedMemory.date);
@@ -760,7 +785,7 @@ export default function CalendarPage({
               {/* Action Button */}
               <div className="pt-4 border-t flex flex-col gap-2">
                 {clickedEmptyDate.isWithinRange ? (
-                  session.role === "admin" ? (
+                  session.role !== null ? (
                     <button
                       onClick={() => {
                         onNavigateToSettingsWithDate(clickedEmptyDate.dateStr);
@@ -773,7 +798,7 @@ export default function CalendarPage({
                     </button>
                   ) : (
                     <div className="p-3 bg-pink-50/50 dark:bg-pink-950/10 rounded-2xl border border-pink-100/10 text-xs text-pink-500 font-medium">
-                      ✨ Only our garden keeper (Admin) can write new memories here, but you can remind them to paint this day!
+                      ✨ Please enter a passcode in Settings to plant memory flowers and access this digital garden.
                     </div>
                   )
                 ) : null}

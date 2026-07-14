@@ -428,7 +428,7 @@ export default function SettingsPage({
 
       {/* Settings Navigation Sub-Tabs */}
       <div className="flex gap-2 border-b border-gray-100 dark:border-gray-800 pb-3 mb-6 overflow-x-auto select-none">
-        {session.role === "admin" && (
+        {session.role !== null && (
           <button
             id="subtab-dashboard"
             onClick={() => setActiveSubTab("dashboard")}
@@ -456,7 +456,7 @@ export default function SettingsPage({
           App Themes
         </button>
 
-        {session.role === "admin" && (
+        {session.role !== null && (
           <button
             id="subtab-memories"
             onClick={() => setActiveSubTab("memories")}
@@ -487,8 +487,8 @@ export default function SettingsPage({
 
       {/* Sub-Tab Contents */}
       <div className="min-h-[400px]">
-        {/* SUBTAB 1: ADMIN DASHBOARD (Plant Memory) */}
-        {activeSubTab === "dashboard" && session.role === "admin" && (
+        {/* SUBTAB 1: WRITE ENTRY DASHBOARD */}
+        {activeSubTab === "dashboard" && session.role !== null && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -762,7 +762,7 @@ export default function SettingsPage({
         )}
 
         {/* SUBTAB 3: MEDIA & MEMORIES LIST */}
-        {activeSubTab === "memories" && session.role === "admin" && (
+        {activeSubTab === "memories" && session.role !== null && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

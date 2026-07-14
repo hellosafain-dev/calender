@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabase } from '../lib/supabase.js';
-import { requireAdmin } from '../lib/vercel-auth.js';
+import { requireAuth } from '../lib/vercel-auth.js';
 
 // Disable default body parsing limits for large photo uploads (up to 15MB)
 export const config = {
@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const user = requireAdmin(req, res);
+  const user = requireAuth(req, res);
   if (!user) return;
 
   const { file, name } = req.body;

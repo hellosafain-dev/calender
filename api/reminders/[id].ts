@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabase, dbToReminder } from '../../lib/supabase.js';
-import { requireAdmin } from '../../lib/vercel-auth.js';
+import { requireAuth } from '../../lib/vercel-auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { id } = req.query as { id: string };
 
   if (req.method === 'PUT') {
-    const user = requireAdmin(req, res);
+    const user = requireAuth(req, res);
     if (!user) return;
 
     const { data: existing } = await supabase.from('reminders').select('*').eq('id', id).single();
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'DELETE') {
-    const user = requireAdmin(req, res);
+    const user = requireAuth(req, res);
     if (!user) return;
     const { error } = await supabase.from('reminders').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
