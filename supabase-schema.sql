@@ -51,8 +51,8 @@ CREATE INDEX IF NOT EXISTS idx_reminders_active ON reminders(is_active);
 INSERT INTO settings (key, value) VALUES
   ('theme', 'elegant_dark'),
   ('title', 'Bloom Diary'),
-  ('admin_password', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
-  ('viewer_password', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
+  ('admin_password', '$2b$10$Ru3xbP9R8E5E.f6zc33oSu2qph7riYh7wMXQO/lC5ZxNqhiuXppIW'),
+  ('viewer_password', '$2b$10$UL4KOLe4nuDgmxdxNqRUi.PPlDhbXe1YoV.LUjpEBykAifLLIY2VW')
 ON CONFLICT (key) DO NOTHING;
 
 -- ─── Row Level Security (RLS) ─────────────────────────────────────────────────
