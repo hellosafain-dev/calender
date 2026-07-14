@@ -21,6 +21,8 @@ interface SettingsPageProps {
   onLogout: () => void;
   preSelectedDate?: string | null;
   clearPreSelectedDate?: () => void;
+  autoCycle?: boolean;
+  onToggleAutoCycle?: () => void;
 }
 
 export default function SettingsPage({
@@ -33,7 +35,9 @@ export default function SettingsPage({
   onLoginSuccess,
   onLogout,
   preSelectedDate,
-  clearPreSelectedDate
+  clearPreSelectedDate,
+  autoCycle = false,
+  onToggleAutoCycle = () => {}
 }: SettingsPageProps) {
   // Authentication Passcode State
   const [passcode, setPasscode] = useState("");
@@ -721,6 +725,32 @@ export default function SettingsPage({
                 Shift the emotional ambiance of Bloom Diary instantly.
               </p>
 
+              {/* Dynamic Auto Cycle Toggle */}
+              <div className="flex items-center justify-between p-4 mb-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-neutral-200/20 dark:border-neutral-800/40">
+                <div className="pr-4">
+                  <span className={`text-xs font-bold ${theme.textPrimary} flex items-center gap-1.5`}>
+                    <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                    Daily Dynamic Theme Cycle
+                  </span>
+                  <p className={`text-[10px] ${theme.textSecondary} mt-0.5 leading-normal`}>
+                    Automatically cycle through Rapunzel, Barbie, Oswald, and all 17 themes day-by-day!
+                  </p>
+                </div>
+                <button
+                  onClick={onToggleAutoCycle}
+                  className={`w-10 h-6 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-300 shrink-0 ${
+                    autoCycle ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700'
+                  }`}
+                >
+                  <motion.div
+                    layout
+                    className="bg-white w-5 h-5 rounded-full shadow-md"
+                    animate={{ x: autoCycle ? 16 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {Object.entries(THEMES).map(([tName, tObj]) => {
                   const isSelected = selectedThemeName === tName;
@@ -749,9 +779,16 @@ export default function SettingsPage({
                       <div className="flex gap-1.5 mt-2">
                         <div className={`w-5 h-5 rounded-md ${tObj.card} border ${tObj.border}`} />
                         <div className={`w-5 h-5 rounded-md ${tObj.accent} border ${tObj.border}`} />
-                        <div className={`w-5 h-5 rounded-md ${tObj.accentLight} border ${tObj.border} flex items-center justify-center text-[10px]`}>
-                          🌸
-                        </div>
+                        {tObj.bgImage ? (
+                          <div 
+                            className="w-5 h-5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-cover bg-center shrink-0" 
+                            style={{ backgroundImage: `url(${tObj.bgImage})` }} 
+                          />
+                        ) : (
+                          <div className={`w-5 h-5 rounded-md ${tObj.accentLight} border ${tObj.border} flex items-center justify-center text-[10px]`}>
+                            🌸
+                          </div>
+                        )}
                       </div>
                     </button>
                   );

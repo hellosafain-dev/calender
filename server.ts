@@ -95,7 +95,10 @@ function requireAdmin(req: any, res: any, next: any) {
 const VALID_FLOWERS = ['rose', 'tulip', 'lavender', 'sunflower', 'cherry_blossom', 'jasmine', 'hydrangea', 'peony'] as const;
 const VALID_MOODS = ['peaceful', 'joyful', 'nostalgic', 'romantic', 'grateful', 'calm'] as const;
 const VALID_WEATHER = ['sunny', 'rainy', 'cloudy', 'snowy', 'windy'] as const;
-const VALID_THEMES: ThemeType[] = ['light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean', 'elegant_dark'];
+const VALID_THEMES: ThemeType[] = [
+  'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean', 'elegant_dark',
+  'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust'
+];
 
 const MemoryCreateSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
@@ -163,13 +166,14 @@ app.get('/api/settings', (req, res) => {
   res.json({
     theme: getSetting('theme') || 'elegant_dark',
     title: getSetting('title') || 'Bloom Diary',
+    autoCycle: getSetting('autoCycle') === 'true',
     hasAdminPassword: !!getSetting('admin_password'),
     hasViewerPassword: !!getSetting('viewer_password'),
   });
 });
 
 app.post('/api/settings', protect, requireAdmin, (req, res) => {
-  const { theme, title, passwordHash, viewerPasswordHash } = req.body;
+  const { theme, title, passwordHash, viewerPasswordHash, autoCycle } = req.body;
 
   if (theme && VALID_THEMES.includes(theme)) setSetting('theme', theme);
   if (title && typeof title === 'string' && title.length <= 100) setSetting('title', title.trim());
@@ -179,8 +183,16 @@ app.post('/api/settings', protect, requireAdmin, (req, res) => {
   if (viewerPasswordHash && typeof viewerPasswordHash === 'string' && viewerPasswordHash.length > 0) {
     setSetting('viewer_password', bcrypt.hashSync(viewerPasswordHash, 10));
   }
+  if (autoCycle !== undefined) {
+    setSetting('autoCycle', String(autoCycle));
+  }
 
-  res.json({ success: true, theme: getSetting('theme'), title: getSetting('title') });
+  res.json({ 
+    success: true, 
+    theme: getSetting('theme'), 
+    title: getSetting('title'),
+    autoCycle: getSetting('autoCycle') === 'true'
+  });
 });
 
 // ── Memories ──────────────────────────────────────────────────────────────────

@@ -59,13 +59,13 @@ export const API = {
     return data;
   },
 
-  async getSettings(): Promise<{ theme: ThemeType; title: string; hasAdminPassword?: boolean; hasViewerPassword?: boolean }> {
+  async getSettings(): Promise<{ theme: ThemeType; title: string; autoCycle?: boolean; hasAdminPassword?: boolean; hasViewerPassword?: boolean }> {
     const res = await resilientFetch(`${BASE_URL}/api/settings`, { headers: authHeaders() });
     if (!res.ok) throw new Error('Failed to load settings');
     return res.json();
   },
 
-  async updateSettings(settings: { theme?: ThemeType; title?: string; passwordHash?: string; viewerPasswordHash?: string }): Promise<any> {
+  async updateSettings(settings: { theme?: ThemeType; title?: string; passwordHash?: string; viewerPasswordHash?: string; autoCycle?: boolean }): Promise<any> {
     const res = await resilientFetch(`${BASE_URL}/api/settings`, {
       method: 'POST',
       headers: authHeaders(),

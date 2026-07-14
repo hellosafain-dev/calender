@@ -34,6 +34,7 @@ export default function App() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [selectedThemeName, setSelectedThemeName] = useState<ThemeType>("cherry");
+  const [autoCycle, setAutoCycle] = useState(false);
   const [diaryTitle, setDiaryTitle] = useState("Bloom Diary");
 
   // Loading & Error States
@@ -141,6 +142,7 @@ export default function App() {
       const sData = await API.getSettings();
       setSelectedThemeName(sData.theme);
       setDiaryTitle(sData.title);
+      setAutoCycle(!!sData.autoCycle);
 
       // Fetch memories & reminders
       const [mList, rList] = await Promise.all([
@@ -238,9 +240,20 @@ export default function App() {
   const handleThemeChange = async (themeName: ThemeType) => {
     try {
       setSelectedThemeName(themeName);
-      await API.updateSettings({ theme: themeName });
+      setAutoCycle(false);
+      await API.updateSettings({ theme: themeName, autoCycle: false });
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleToggleAutoCycle = async () => {
+    const nextVal = !autoCycle;
+    setAutoCycle(nextVal);
+    try {
+      await API.updateSettings({ autoCycle: nextVal });
+    } catch (err) {
+      console.error("Failed to update auto cycle settings:", err);
     }
   };
 
@@ -259,7 +272,14 @@ export default function App() {
     setActiveTab(3); // Switch to Settings tab
   };
 
-  const currentTheme = THEMES[selectedThemeName];
+  const themeKeys: ThemeType[] = [
+    'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean',
+    'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust'
+  ];
+  const activeThemeName = autoCycle
+    ? themeKeys[(new Date().getDate() - 1) % themeKeys.length]
+    : selectedThemeName;
+  const currentTheme = THEMES[activeThemeName];
 
   if (loading && !memories.length) {
     return (
@@ -299,6 +319,18 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary fallbackMessage="Garden encountered an error">
     <div className={`min-h-screen ${currentTheme.bg} pb-24 transition-colors duration-500 relative overflow-x-hidden`}>
+      {/* Dynamic Blurred Theme Background Image */}
+      {currentTheme.bgImage && (
+        <div 
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-1000"
+          style={{ 
+            backgroundImage: `url(${currentTheme.bgImage})`,
+            filter: 'blur(35px) brightness(0.7) saturate(1.1)',
+            transform: 'scale(1.12)' // zoom slightly to hide edge artifacts from blur
+          }} 
+        />
+      )}
+
       {/* Elegant Dark Ambient Glows */}
       {selectedThemeName === "elegant_dark" && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -379,6 +411,8 @@ export default function App() {
                 onLogout={handleLogout}
                 preSelectedDate={preSelectedDate}
                 clearPreSelectedDate={() => setPreSelectedDate(null)}
+                autoCycle={autoCycle}
+                onToggleAutoCycle={handleToggleAutoCycle}
               />
             </motion.div>
           )}
