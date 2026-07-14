@@ -42,6 +42,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    // Auto theme update
+    const activeFlowerId = flowerId ?? existing.flower_id;
+    const isDraftState = isDraft !== undefined ? isDraft : existing.is_draft;
+    const flowerToThemeMap: Record<string, string> = {
+      rose: 'cherry',
+      peony: 'light',
+      tulip: 'spring',
+      lavender: 'lavender',
+      sunflower: 'autumn',
+      cherry_blossom: 'cherry',
+    };
+    const targetTheme = flowerToThemeMap[activeFlowerId];
+    if (targetTheme && !isDraftState) {
+      await supabase.from('settings').upsert({ key: 'theme', value: targetTheme }, { onConflict: 'key' });
+    }
+
     return res.json({ success: true, memory: dbToMemory(updated) });
   }
 

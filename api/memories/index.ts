@@ -40,6 +40,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('date', date)
       .single();
 
+    const flowerToThemeMap: Record<string, string> = {
+      rose: 'cherry',
+      peony: 'light',
+      tulip: 'spring',
+      lavender: 'lavender',
+      sunflower: 'autumn',
+      cherry_blossom: 'cherry',
+    };
+    const targetTheme = flowerToThemeMap[flowerId];
+
     if (existing && !isDraft) {
       const { data: updated, error } = await supabase
         .from('memories')
@@ -49,6 +59,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .single();
 
       if (error) return res.status(500).json({ error: error.message });
+
+      if (targetTheme) {
+        await supabase.from('settings').upsert({ key: 'theme', value: targetTheme }, { onConflict: 'key' });
+      }
+
       return res.json({ success: true, memory: dbToMemory(updated), updated: true });
     }
 
@@ -73,6 +88,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    if (targetTheme && !isDraft) {
+      await supabase.from('settings').upsert({ key: 'theme', value: targetTheme }, { onConflict: 'key' });
+    }
+
     return res.json({ success: true, memory: dbToMemory(created) });
   }
 

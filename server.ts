@@ -209,6 +209,16 @@ app.post('/api/memories', protect, (req, res) => {
   const { date, title, note, flowerId, mood, weather, music, tags, photos, isDraft } = parse.data;
   const now = new Date().toISOString();
 
+  const flowerToThemeMap: Record<string, string> = {
+    rose: 'cherry',
+    peony: 'light',
+    tulip: 'spring',
+    lavender: 'lavender',
+    sunflower: 'autumn',
+    cherry_blossom: 'cherry',
+  };
+  const targetTheme = flowerToThemeMap[flowerId];
+
   // Check if non-draft memory for this date already exists — merge/update
   const existing = memoryQueries.getByDate.get(date) as any;
   if (existing && !isDraft) {
@@ -221,6 +231,9 @@ app.post('/api/memories', protect, (req, res) => {
       existing.id,
     );
     const updated = memoryQueries.getById.get(existing.id) as any;
+    if (targetTheme) {
+      setSetting('theme', targetTheme);
+    }
     return res.json({ success: true, memory: rowToMemory(updated), updated: true });
   }
 
@@ -235,6 +248,9 @@ app.post('/api/memories', protect, (req, res) => {
   );
 
   const created = memoryQueries.getById.get(id) as any;
+  if (targetTheme && !isDraft) {
+    setSetting('theme', targetTheme);
+  }
   res.json({ success: true, memory: rowToMemory(created) });
 });
 
@@ -267,6 +283,23 @@ app.put('/api/memories/:id', protect, (req, res) => {
   );
 
   const updated = memoryQueries.getById.get(id) as any;
+
+  // Auto theme update
+  const activeFlowerId = data.flowerId ?? existing.flower_id;
+  const isDraftState = data.isDraft !== undefined ? data.isDraft : existing.is_draft;
+  const flowerToThemeMap: Record<string, string> = {
+    rose: 'cherry',
+    peony: 'light',
+    tulip: 'spring',
+    lavender: 'lavender',
+    sunflower: 'autumn',
+    cherry_blossom: 'cherry',
+  };
+  const targetTheme = flowerToThemeMap[activeFlowerId];
+  if (targetTheme && !isDraftState) {
+    setSetting('theme', targetTheme);
+  }
+
   res.json({ success: true, memory: rowToMemory(updated) });
 });
 
