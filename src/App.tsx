@@ -1,0 +1,470 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Memory, Reminder, ThemeType } from "./types.js";
+import { THEMES } from "./lib/themes.js";
+import { API, getSession, clearSession, Session } from "./lib/api.js";
+import BottomNav from "./components/BottomNav.js";
+import CalendarPage from "./components/CalendarPage.js";
+import TimelinePage from "./components/TimelinePage.js";
+import ClockPage from "./components/ClockPage.js";
+import SettingsPage from "./components/SettingsPage.js";
+import ErrorBoundary from "./components/ErrorBoundary.js";
+import { Flower, ShieldAlert } from "lucide-react";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+    },
+  },
+});
+
+export default function App() {
+  // Navigation active tab index (0: Calendar, 1: Timeline, 2: Reminders, 3: Settings)
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Application Data States
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [selectedThemeName, setSelectedThemeName] = useState<ThemeType>("cherry");
+  const [diaryTitle, setDiaryTitle] = useState("Bloom Diary");
+
+  // Loading & Error States
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // User Authentication & Roles (Admin, Viewer, Guest)
+  const [session, setSession] = useState<Session>({ role: null, username: null });
+
+  // Navigation Callback dates (e.g. tapping empty calendar date takes Admin to Write entry with that pre-selected date)
+  const [preSelectedDate, setPreSelectedDate] = useState<string | null>(null);
+
+  // Triggered reminders tracking
+  const [triggeredToday, setTriggeredToday] = useState<{[reminderId: string]: string}>({});
+  const [activeTriggeredReminder, setActiveTriggeredReminder] = useState<Reminder | null>(null);
+
+  // Background check for active reminders
+  useEffect(() => {
+    const checkActiveReminders = () => {
+      const now = new Date();
+      const currentHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      
+      const localYear = now.getFullYear();
+      const localMonth = String(now.getMonth() + 1).padStart(2, "0");
+      const localDay = String(now.getDate()).padStart(2, "0");
+      const currentLocalYYYYMMDD = `${localYear}-${localMonth}-${localDay}`;
+      const timeKey = `${currentLocalYYYYMMDD}-${currentHHMM}`;
+
+      reminders.forEach((reminder) => {
+        if (!reminder.isActive) return;
+        if (reminder.time !== currentHHMM) return;
+
+        // Check if already triggered during this exact minute
+        if (triggeredToday[reminder.id] === timeKey) return;
+
+        // Verify date/repeat criteria
+        let isMatched = false;
+        const baseDate = new Date(reminder.date || reminder.createdAt);
+
+        if (reminder.repeat === "none") {
+          if (reminder.date) {
+            isMatched = reminder.date === currentLocalYYYYMMDD;
+          } else {
+            isMatched = true; // Trigger today at specified HH:MM
+          }
+        } else if (reminder.repeat === "daily") {
+          isMatched = true;
+        } else if (reminder.repeat === "weekly") {
+          isMatched = now.getDay() === baseDate.getDay();
+        } else if (reminder.repeat === "monthly") {
+          isMatched = now.getDate() === baseDate.getDate();
+        } else if (reminder.repeat === "yearly") {
+          isMatched = now.getMonth() === baseDate.getMonth() && now.getDate() === baseDate.getDate();
+        }
+
+        if (isMatched) {
+          // Play garden chime
+          try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContext) {
+              const ctx = new AudioContext();
+              const playTone = (freq: number, start: number, dur: number) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(freq, start);
+                gain.gain.setValueAtTime(0, start);
+                gain.gain.linearRampToValueAtTime(0.15, start + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + dur);
+              };
+              const nowTime = ctx.currentTime;
+              playTone(523.25, nowTime, 1.2);       // C5
+              playTone(659.25, nowTime + 0.15, 1.2); // E5
+              playTone(783.99, nowTime + 0.3, 1.2);  // G5
+              playTone(987.77, nowTime + 0.45, 1.5); // B5
+            }
+          } catch (e) {
+            console.warn("Blocked chime:", e);
+          }
+
+          // Trigger state
+          setActiveTriggeredReminder(reminder);
+          setTriggeredToday(prev => ({ ...prev, [reminder.id]: timeKey }));
+        }
+      });
+    };
+
+    const interval = setInterval(checkActiveReminders, 10000);
+    checkActiveReminders();
+
+    return () => clearInterval(interval);
+  }, [reminders, triggeredToday]);
+
+  // Load all server-side data on mount
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch active settings & themes
+      const sData = await API.getSettings();
+      setSelectedThemeName(sData.theme);
+      setDiaryTitle(sData.title);
+
+      // Fetch memories & reminders
+      const [mList, rList] = await Promise.all([
+        API.getMemories(),
+        API.getReminders()
+      ]);
+
+      setMemories(mList);
+      setReminders(rList);
+    } catch (err: any) {
+      console.error("Failed to fetch full-stack server state:", err);
+      setError("Failed to coordinate data with our digital garden server. Please refresh.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Read session from local storage on bootstrap
+    const activeSession = getSession();
+    setSession(activeSession);
+    
+    loadAllData();
+  }, []);
+
+  // Update document body style when active theme transitions
+  useEffect(() => {
+    const currentTheme = THEMES[selectedThemeName];
+    // Remove all possible bg classes
+    const body = document.body;
+    if (body) {
+      body.className = `${currentTheme.bg} transition-colors duration-500 font-sans antialiased text-gray-800 selection:bg-pink-150`;
+    }
+  }, [selectedThemeName]);
+
+  // Update browser favicon dynamically to match the current date and active theme
+  useEffect(() => {
+    const today = new Date();
+    const day = today.getDate();
+
+    const themeColors: Record<string, string> = {
+      light: "#C49A45",
+      dark: "#A78BFA",
+      autumn: "#D96B27",
+      spring: "#719E6E",
+      lavender: "#8E79CD",
+      cherry: "#EC708B",
+      forest: "#4AA685",
+      ocean: "#4FADD2",
+      elegant_dark: "#FFFFFF",
+    };
+
+    const accentColor = themeColors[selectedThemeName] || "#EC708B";
+    const textColor = selectedThemeName === "elegant_dark" ? "#000000" : accentColor;
+
+    // Render an SVG favicon representing the calendar icon with the correct date
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <rect width="512" height="512" rx="140" fill="${accentColor.replace('#', '%23')}" />
+        <rect x="75" y="75" width="362" height="362" rx="75" fill="%23FFFFFF" />
+        <rect x="160" y="110" width="32" height="50" rx="16" fill="rgba(0,0,0,0.15)" />
+        <rect x="320" y="110" width="32" height="50" rx="16" fill="rgba(0,0,0,0.15)" />
+        <text x="256" y="325" 
+              font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif" 
+              font-size="200" 
+              font-weight="900" 
+              fill="${textColor.replace('#', '%23')}" 
+              text-anchor="middle"
+              letter-spacing="-8">
+          ${day}
+        </text>
+      </svg>
+    `.trim();
+
+    // Dynamic favicon update
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = `data:image/svg+xml;utf8,${svg}`;
+
+    // Dynamic apple-touch-icon update
+    let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+    if (!appleLink) {
+      appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      document.head.appendChild(appleLink);
+    }
+    appleLink.href = `data:image/svg+xml;utf8,${svg}`;
+  }, [selectedThemeName]);
+
+
+  const handleThemeChange = async (themeName: ThemeType) => {
+    try {
+      setSelectedThemeName(themeName);
+      await API.updateSettings({ theme: themeName });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLoginSuccess = (newSession: Session) => {
+    setSession(newSession);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setSession({ role: null, username: null });
+    setActiveTab(0);
+  };
+
+  const handleNavigateToSettingsWithDate = (dateStr: string) => {
+    setPreSelectedDate(dateStr);
+    setActiveTab(3); // Switch to Settings tab
+  };
+
+  const currentTheme = THEMES[selectedThemeName];
+
+  if (loading && !memories.length) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#FDF8F8] text-[#855D5D] gap-3">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        >
+          <Flower className="w-12 h-12 text-[#EC708B] animate-pulse" />
+        </motion.div>
+        <span className="text-sm font-medium tracking-widest uppercase animate-pulse">
+          Bloom Diary Loading...
+        </span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center p-6 text-center bg-red-50 text-red-600 space-y-4">
+        <ShieldAlert className="w-12 h-12" />
+        <div>
+          <h2 className="text-xl font-bold">Garden Server Offline</h2>
+          <p className="text-sm text-red-500 max-w-md mt-2">{error}</p>
+        </div>
+        <button
+          onClick={loadAllData}
+          className="px-5 py-2.5 rounded-full bg-red-600 text-white font-bold text-xs shadow-md cursor-pointer hover:bg-red-700 active:scale-95 transition-all"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary fallbackMessage="Garden encountered an error">
+    <div className={`min-h-screen ${currentTheme.bg} pb-24 transition-colors duration-500 relative overflow-x-hidden`}>
+      {/* Elegant Dark Ambient Glows */}
+      {selectedThemeName === "elegant_dark" && (
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-rose-950/20 rounded-full blur-[130px] opacity-75" />
+          <div className="absolute top-1/4 -right-40 w-[400px] h-[400px] bg-amber-950/15 rounded-full blur-[110px] opacity-60" />
+          <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-red-950/10 rounded-full blur-[120px] opacity-50" />
+        </div>
+      )}
+
+      {/* Dynamic Tab Mounting */}
+      <main className="relative z-10">
+        <AnimatePresence mode="wait">
+          {activeTab === 0 && (
+            <motion.div
+              key="tab-calendar"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <CalendarPage
+                memories={memories}
+                onRefreshMemories={loadAllData}
+                theme={currentTheme}
+                session={session}
+                onNavigateToSettingsWithDate={handleNavigateToSettingsWithDate}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 1 && (
+            <motion.div
+              key="tab-timeline"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <TimelinePage
+                memories={memories}
+                theme={currentTheme}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 2 && (
+            <motion.div
+              key="tab-clock"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ClockPage
+                reminders={reminders}
+                onRefreshReminders={loadAllData}
+                theme={currentTheme}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 3 && (
+            <motion.div
+              key="tab-settings"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <SettingsPage
+                memories={memories}
+                onRefreshMemories={loadAllData}
+                theme={currentTheme}
+                selectedThemeName={selectedThemeName}
+                onChangeTheme={handleThemeChange}
+                session={session}
+                onLoginSuccess={handleLoginSuccess}
+                onLogout={handleLogout}
+                preSelectedDate={preSelectedDate}
+                clearPreSelectedDate={() => setPreSelectedDate(null)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Floating Bottom Dock */}
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        theme={currentTheme}
+      />
+
+      {/* Real-time Triggered Reminder Modal */}
+      <AnimatePresence>
+        {activeTriggeredReminder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className={`w-full max-w-sm rounded-3xl p-6 ${currentTheme.card} border border-white/10 ${currentTheme.shadow} text-center space-y-6 relative overflow-hidden`}
+            >
+              {/* Pulsing Back Glow */}
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse" />
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl animate-pulse" />
+              
+              <div className="mx-auto w-16 h-16 rounded-full bg-pink-50 dark:bg-rose-950/40 flex items-center justify-center border border-pink-100 dark:border-rose-900/40 shadow-lg animate-bounce">
+                <span className="text-3xl">
+                  {activeTriggeredReminder.type === "anniversary" ? "💖" :
+                   activeTriggeredReminder.type === "birthday" ? "🎂" :
+                   activeTriggeredReminder.type === "prayer" ? "🙏" :
+                   activeTriggeredReminder.type === "medicine" ? "💊" : "🌸"}
+                </span>
+              </div>
+
+              <div className="space-y-2 relative z-10">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-pink-100 dark:bg-pink-950/60 text-[10px] font-extrabold text-pink-600 dark:text-pink-300 uppercase tracking-widest">
+                  ✨ Sacred Reminder Triggered
+                </span>
+                <h3 className={`text-2xl font-extrabold tracking-tight ${currentTheme.textPrimary} font-sans`}>
+                  {activeTriggeredReminder.title}
+                </h3>
+                <p className={`text-xs ${currentTheme.textSecondary}`}>
+                  Scheduled for {activeTriggeredReminder.time}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 relative z-10">
+                <button
+                  id="reminder-snooze-btn"
+                  onClick={() => {
+                    const snoozeTime = new Date(Date.now() + 5 * 60 * 1000);
+                    const snoozeHHMM = `${String(snoozeTime.getHours()).padStart(2, "0")}:${String(snoozeTime.getMinutes()).padStart(2, "0")}`;
+                    
+                    const snoozedItem: Reminder = {
+                      id: `snooze-${Date.now()}`,
+                      title: `${activeTriggeredReminder.title} (Snoozed)`,
+                      time: snoozeHHMM,
+                      repeat: "none",
+                      type: activeTriggeredReminder.type,
+                      isActive: true,
+                      createdAt: new Date().toISOString()
+                    };
+                    
+                    setReminders(prev => [...prev, snoozedItem]);
+                    setActiveTriggeredReminder(null);
+                  }}
+                  className={`py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-extrabold border border-white/10 ${currentTheme.textPrimary} transition-colors cursor-pointer`}
+                >
+                  Snooze 5m
+                </button>
+                <button
+                  id="reminder-dismiss-btn"
+                  onClick={() => setActiveTriggeredReminder(null)}
+                  className={`py-3 rounded-2xl text-white text-xs font-extrabold ${currentTheme.accent} ${currentTheme.accentHover} shadow transition-colors cursor-pointer`}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+      </ErrorBoundary>
+    </QueryClientProvider>
+  );
+}

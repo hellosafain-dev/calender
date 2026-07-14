@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+}
+
+/* ─── Global Mobile PWA Defaults ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Full height including browser chrome on mobile */
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh; /* dynamic viewport height — handles iOS address bar */
+  overscroll-behavior: none; /* prevents pull-to-refresh interfering with app */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+#root {
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+/* ─── Safe Area Support (iPhone notch / Dynamic Island) ─────────────────── */
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left   { padding-left: env(safe-area-inset-left); }
+.safe-right  { padding-right: env(safe-area-inset-right); }
+
+/* ─── Bottom Nav Safe Area ───────────────────────────────────────────────── */
+.bottom-nav-safe {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
+
+/* ─── Custom Scrollbars ──────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(236, 112, 139, 0.3);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(236, 112, 139, 0.6);
+}
+
+/* ─── Glassmorphism Utility ──────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* ─── Smooth Animations ──────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Text Selection Styling ─────────────────────────────────────────────── */
+::selection {
+  background: rgba(236, 112, 139, 0.25);
+  color: inherit;
+}
+
+/* ─── Prevent text resize on orientation change ──────────────────────────── */
+@media screen and (orientation: landscape) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* ─── PWA Install Banner Animation ──────────────────────────────────────── */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-install-banner {
+  animation: slideUpFade 0.4s ease-out;
+}
+
+/* ─── Bloom Diary — Custom Flower Glow Effect ───────────────────────────── */
+.flower-glow {
+  filter: drop-shadow(0 0 12px rgba(236, 112, 139, 0.5));
+}
+
+/* ─── Typography Hierarchy ───────────────────────────────────────────────── */
+.font-display {
+  font-family: "Playfair Display", Georgia, serif;
+  font-feature-settings: "liga" 1, "kern" 1;
+}

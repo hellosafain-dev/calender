@@ -1,0 +1,6 @@
+{
+  "name": "Bloom Diary",
+  "description": "A beautiful, emotionally engaging private digital memory diary centered around flowers, memories, and emotions. Features an elegant monthly calendar, organic curved timeline, clock & reminders, and administrator console.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

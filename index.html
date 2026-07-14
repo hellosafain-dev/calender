@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ─── Primary SEO ───────────────────────────────────────── -->
+    <title>Bloom Diary — Your Private Memory Garden</title>
+    <meta name="description" content="A beautiful private digital memory diary. Every memory becomes a flower in your personal garden." />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- ─── Theme Colors ──────────────────────────────────────── -->
+    <meta name="theme-color" content="#EC708B" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme: dark)" />
+
+    <!-- ─── PWA Icons & Manifest ──────────────────────────────── -->
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- manifest injected by vite-plugin-pwa -->
+
+    <!-- ─── iOS PWA (Full-Screen App Feel) ────────────────────── -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Bloom Diary" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- ─── iOS Splash Screen (Portrait) ─────────────────────── -->
+    <link rel="apple-touch-startup-image" href="/icons/icon-512.png" />
+
+    <!-- ─── Android / Chrome ─────────────────────────────────── -->
+    <meta name="application-name" content="Bloom Diary" />
+
+    <!-- ─── Windows Tile ─────────────────────────────────────── -->
+    <meta name="msapplication-TileColor" content="#EC708B" />
+    <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- ─── Open Graph ───────────────────────────────────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Bloom Diary" />
+    <meta property="og:description" content="Your private digital memory garden." />
+    <meta property="og:image" content="/icons/icon-512.png" />
+
+    <!-- ─── Google Fonts — Premium Typography ────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ─── Prevent Flash of Unstyled Content ────────────────── -->
+    <style>
+      html, body, #root {
+        margin: 0; padding: 0;
+        background: #0D0D0D;
+        min-height: 100dvh;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      /* Safe area support for notched devices */
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,166 @@
+{
+  "memories": [
+    {
+      "id": "mem-1",
+      "date": "2025-10-18",
+      "title": "The Day It All Began",
+      "note": "We met under the gentle autumn rain, sharing an umbrella and a warm cup of coffee. Time seemed to slow down as we talked for hours about our favorite books and songs. I knew right then that my life was about to change beautifully.",
+      "flowerId": "rose",
+      "mood": "romantic",
+      "weather": "rainy",
+      "music": "Autumn Leaves - Edith Piaf",
+      "tags": [
+        "first-meeting",
+        "rainy-day",
+        "beginning"
+      ],
+      "photos": [
+        "https://picsum.photos/seed/rose_garden/800/600"
+      ],
+      "isFavorite": true,
+      "isDraft": false,
+      "createdAt": "2025-10-18T18:30:00.000Z",
+      "updatedAt": "2025-10-18T18:30:00.000Z"
+    },
+    {
+      "id": "mem-2",
+      "date": "2025-11-11",
+      "title": "Warm Cocoa & Laughter",
+      "note": "A chilly evening spent inside making hot cocoa with extra marshmallows. We built a small blanket fort in the living room and watched old black-and-white films. Every laugh shared felt like a warm fire.",
+      "flowerId": "peony",
+      "mood": "calm",
+      "weather": "windy",
+      "music": "Cozy Winter - Lofi Cafe",
+      "tags": [
+        "home",
+        "cocoa",
+        "comfort"
+      ],
+      "photos": [
+        "https://picsum.photos/seed/hot_cocoa/800/600"
+      ],
+      "isFavorite": false,
+      "isDraft": false,
+      "createdAt": "2025-11-11T20:45:00.000Z",
+      "updatedAt": "2025-11-11T20:45:00.000Z"
+    },
+    {
+      "id": "mem-3",
+      "date": "2026-02-14",
+      "title": "Valentine's Secret Picnic",
+      "note": "I surprised her with a secret picnic by the glasshouse. The spring flowers were just starting to open, casting a soft scent through the breeze. We shared strawberries, laughed at silly memories, and drew sketch portraits of each other.",
+      "flowerId": "tulip",
+      "mood": "joyful",
+      "weather": "sunny",
+      "music": "La Vie En Rose - Louis Armstrong",
+      "tags": [
+        "valentines",
+        "picnic",
+        "surprise"
+      ],
+      "photos": [
+        "https://picsum.photos/seed/picnic/800/600"
+      ],
+      "isFavorite": true,
+      "isDraft": false,
+      "createdAt": "2026-02-14T12:00:00.000Z",
+      "updatedAt": "2026-02-14T12:00:00.000Z"
+    },
+    {
+      "id": "mem-4",
+      "date": "2026-05-10",
+      "title": "Midnight Stargazing",
+      "note": "We drove up to the scenic overlook at 2 AM to watch the Lyrid meteor shower. Wrapped in a giant wool blanket, we saw five shooting stars. Each time, we whispered the same wish. The peace of the night was magical.",
+      "flowerId": "lavender",
+      "mood": "peaceful",
+      "weather": "cloudy",
+      "music": "Clair de Lune - Debussy",
+      "tags": [
+        "stars",
+        "night-drive",
+        "peace"
+      ],
+      "photos": [
+        "https://picsum.photos/seed/stars_night/800/600"
+      ],
+      "isFavorite": false,
+      "isDraft": false,
+      "createdAt": "2026-05-10T02:00:00.000Z",
+      "updatedAt": "2026-05-10T02:00:00.000Z"
+    },
+    {
+      "id": "mem-5",
+      "date": "2026-06-20",
+      "title": "Golden Hour Sunset Walk",
+      "note": "Walking along the golden shore as the sun dipped below the water. The sky was an endless canvas of soft pinks, deep lavenders, and burning golds. Hand in hand, watching our shadows stretch, realizing how beautiful this journey is.",
+      "flowerId": "sunflower",
+      "mood": "grateful",
+      "weather": "sunny",
+      "music": "Sunset Lover - Petit Biscuit",
+      "tags": [
+        "sunset",
+        "beach",
+        "golden-hour"
+      ],
+      "photos": [
+        "https://picsum.photos/seed/sunset_love/800/600"
+      ],
+      "isFavorite": true,
+      "isDraft": false,
+      "createdAt": "2026-06-20T19:15:00.000Z",
+      "updatedAt": "2026-06-20T19:15:00.000Z"
+    },
+    {
+      "id": "mem-6",
+      "date": "2026-07-14",
+      "title": "Bloom Diary is Born",
+      "note": "Today we launched our sacred Bloom Diary. A private sanctuary where every memory of ours turns into a flower, creating a garden that will bloom and grow beautifully for many years to come. Here's to us, our love, and our quiet piece of heaven.",
+      "flowerId": "cherry_blossom",
+      "mood": "nostalgic",
+      "weather": "sunny",
+      "music": "Bloom - The Paper Kites",
+      "tags": [
+        "launch",
+        "sanctuary",
+        "bloom"
+      ],
+      "photos": [
+        "https://picsum.photos/seed/bloom_flowers/800/600"
+      ],
+      "isFavorite": false,
+      "isDraft": false,
+      "createdAt": "2026-07-14T10:00:00.000Z",
+      "updatedAt": "2026-07-14T12:47:21.900Z"
+    },
+    {
+      "id": "mem-best-life",
+      "date": "2025-12-30",
+      "title": "The Best Memory of My Life ✨",
+      "note": "A night of absolute magic under a canopy of warm, twinkling winter lights. We walked hand-in-hand as gentle snow began to fall, turning the world into a quiet, frozen fairytale. In that beautiful moment, surrounded by perfect peace, we realized we had found our forever. It was, without a doubt, the single greatest, happiest, and most beautiful day of my entire life.",
+      "flowerId": "peony",
+      "mood": "grateful",
+      "weather": "snowy",
+      "music": "Perfect - Ed Sheeran",
+      "tags": [
+        "best-day",
+        "forever",
+        "magical-night",
+        "winter-fairytale"
+      ],
+      "photos": [
+        "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=1000"
+      ],
+      "isFavorite": true,
+      "isDraft": false,
+      "createdAt": "2025-12-30T21:00:00.000Z",
+      "updatedAt": "2025-12-30T21:00:00.000Z"
+    }
+  ],
+  "reminders": [],
+  "settings": {
+    "theme": "dark",
+    "passwordHash": "bloom123",
+    "viewerPasswordHash": "love123",
+    "title": "Bloom Diary"
+  }
+}
