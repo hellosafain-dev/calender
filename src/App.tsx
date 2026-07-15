@@ -19,6 +19,7 @@ import { PlannerHabitsPage } from "./components/PlannerHabitsPage.js";
 import { JournalNotesPage } from "./components/JournalNotesPage.js";
 import ErrorBoundary from "./components/ErrorBoundary.js";
 import { Flower, ShieldAlert } from "lucide-react";
+import { Analytics } from '@vercel/analytics/react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -507,6 +508,7 @@ export default function App() {
       </AnimatePresence>
     </div>
       </ErrorBoundary>
+      <Analytics />
     </QueryClientProvider>
   );
 }
