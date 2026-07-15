@@ -15,9 +15,57 @@ import TimelinePage from "./components/TimelinePage.js";
 import ClockPage from "./components/ClockPage.js";
 import SettingsPage from "./components/SettingsPage.js";
 import ErrorBoundary from "./components/ErrorBoundary.js";
-import { Flower, ShieldAlert } from "lucide-react";
+import { Flower, ShieldAlert, Heart, Award, Compass, Pill, Activity, Mail } from "lucide-react";
 import GlowingLanterns from "./components/GlowingLanterns.js";
 import BirthdaySurprise from "./components/BirthdaySurprise.js";
+
+// ─── Constants & Alarm Utils ───────────────────────────────────────────────
+const TYPE_META: Record<string, { gradient: string; label: string; border: string }> = {
+  anniversary: { gradient: "from-pink-500 to-rose-500",   label: "Anniversary", border: "border-pink-400/30" },
+  birthday:    { gradient: "from-amber-400 to-orange-500",label: "Birthday",    border: "border-amber-400/30" },
+  prayer:      { gradient: "from-teal-400 to-cyan-500",   label: "Prayer",      border: "border-teal-400/30" },
+  medicine:    { gradient: "from-blue-400 to-indigo-500", label: "Medicine",    border: "border-blue-400/30" },
+  custom:      { gradient: "from-purple-400 to-violet-500",label: "General",    border: "border-purple-400/30" },
+};
+
+const getReminderIcon = (type: string, className = "w-5 h-5") => {
+  switch (type) {
+    case "anniversary": return <Heart className={className} />;
+    case "birthday": return <Award className={className} />;
+    case "prayer": return <Compass className={className} />;
+    case "medicine": return <Pill className={className} />;
+    default: return <Activity className={className} />;
+  }
+};
+
+function playMelodiousAlarm(loops = 3) {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return () => {};
+    const ctx = new Ctx();
+    // Beautiful ascending arpeggio
+    const notes = [523.25, 659.25, 783.99, 987.77, 1174.66, 1479.98, 1760, 2093];
+    let t = ctx.currentTime;
+    for (let loop = 0; loop < loops; loop++) {
+      notes.forEach((freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.18, t + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.5);
+        t += 0.18;
+      });
+      t += 0.6; // pause between loops
+    }
+    return () => { try { ctx.close(); } catch {} };
+  } catch { return () => {}; }
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -151,6 +199,8 @@ export default function App() {
   const [triggeredToday, setTriggeredToday] = useState<{[reminderId: string]: string}>({});
   const [activeTriggeredReminder, setActiveTriggeredReminder] = useState<Reminder | null>(null);
 
+  const [activeAlarmStop, setActiveAlarmStop] = useState<(() => void) | null>(null);
+
   // Background check for active reminders
   useEffect(() => {
     const checkActiveReminders = () => {
@@ -191,37 +241,18 @@ export default function App() {
         }
 
         if (isMatched) {
-          // Play garden chime
-          try {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioContext) {
-              const ctx = new AudioContext();
-              const playTone = (freq: number, start: number, dur: number) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(freq, start);
-                gain.gain.setValueAtTime(0, start);
-                gain.gain.linearRampToValueAtTime(0.15, start + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(start);
-                osc.stop(start + dur);
-              };
-              const nowTime = ctx.currentTime;
-              playTone(523.25, nowTime, 1.2);       // C5
-              playTone(659.25, nowTime + 0.15, 1.2); // E5
-              playTone(783.99, nowTime + 0.3, 1.2);  // G5
-              playTone(987.77, nowTime + 0.45, 1.5); // B5
-            }
-          } catch (e) {
-            console.warn("Blocked chime:", e);
-          }
-
-          // Trigger state
+          const stopAudio = playMelodiousAlarm(4);
+          setActiveAlarmStop(() => stopAudio);
           setActiveTriggeredReminder(reminder);
           setTriggeredToday(prev => ({ ...prev, [reminder.id]: timeKey }));
+          
+          if ("Notification" in window && Notification.permission === "granted") {
+            const cleanTitle = reminder.title.split("|")[0].trim();
+            new Notification(cleanTitle, {
+              body: `Your ${TYPE_META[reminder.type]?.label || 'reminder'} is ringing!`,
+              icon: "/icons/icon-192.png"
+            });
+          }
         }
       });
     };
@@ -597,72 +628,91 @@ export default function App() {
       {/* Real-time Triggered Reminder Modal */}
       <AnimatePresence>
         {activeTriggeredReminder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl"
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className={`w-full max-w-sm rounded-3xl p-6 ${currentTheme.card} border border-white/10 ${currentTheme.shadow} text-center space-y-6 relative overflow-hidden`}
+              initial={{ scale:0.8, y:60 }} animate={{ scale:1, y:0 }} exit={{ scale:0.8, y:60 }}
+              transition={{ type:"spring", stiffness:320, damping:26 }}
+              className="w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl"
+              style={{ background:"linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95)" }}
             >
-              {/* Pulsing Back Glow */}
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse" />
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl animate-pulse" />
-              
-              <div className="mx-auto w-16 h-16 rounded-full bg-pink-50 dark:bg-rose-950/40 flex items-center justify-center border border-pink-100 dark:border-rose-900/40 shadow-lg animate-bounce">
-                <span className="text-3xl">
-                  {activeTriggeredReminder.type === "anniversary" ? "💖" :
-                   activeTriggeredReminder.type === "birthday" ? "🎂" :
-                   activeTriggeredReminder.type === "prayer" ? "🙏" :
-                   activeTriggeredReminder.type === "medicine" ? "💊" : "🌸"}
-                </span>
-              </div>
+              <div className="relative flex flex-col items-center pt-10 pb-6 px-6 text-center space-y-5">
+                <motion.div
+                  animate={{ scale:[1, 1.15, 1] }}
+                  transition={{ duration:1.2, repeat:Infinity, ease:"easeInOut" }}
+                  className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shadow-2xl"
+                >
+                  {getReminderIcon(activeTriggeredReminder.type, "w-10 h-10 text-white")}
+                </motion.div>
 
-              <div className="space-y-2 relative z-10">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-pink-100 dark:bg-pink-950/60 text-[10px] font-extrabold text-pink-600 dark:text-pink-300 uppercase tracking-widest">
-                  ✨ Sacred Reminder Triggered
-                </span>
-                <h3 className={`text-2xl font-extrabold tracking-tight ${currentTheme.textPrimary} font-sans`}>
-                  {activeTriggeredReminder.title}
-                </h3>
-                <p className={`text-xs ${currentTheme.textSecondary}`}>
-                  Scheduled for {activeTriggeredReminder.time}
-                </p>
-              </div>
+                {/* Pulse rings */}
+                <div className="absolute top-10 left-1/2 -translate-x-1/2">
+                  {[1,2,3].map(i => (
+                    <motion.div key={i}
+                      animate={{ scale:[1, 2.5+i*0.3], opacity:[0.5, 0] }}
+                      transition={{ duration:2, repeat:Infinity, delay:i*0.4, ease:"easeOut" }}
+                      className="absolute w-24 h-24 rounded-full border-2 border-pink-400/40 -translate-x-1/2 -translate-y-0" />
+                  ))}
+                </div>
 
-              <div className="grid grid-cols-2 gap-3 relative z-10">
-                <button
-                  id="reminder-snooze-btn"
-                  onClick={() => {
+                <div>
+                  <p className="text-xs text-violet-300 font-bold uppercase tracking-widest mb-1">
+                    {TYPE_META[activeTriggeredReminder.type]?.label || 'General'} Reminder
+                  </p>
+                  {(() => {
+                    const parts = activeTriggeredReminder.title.split("|");
+                    const mainTitle = parts[0].trim();
+                    const loveNote = parts[1]?.trim();
+                    return (
+                      <>
+                        <h2 className="text-2xl font-black text-white tracking-tight">{mainTitle}</h2>
+                        {loveNote && (
+                          <div className="mt-3 p-4 rounded-2xl bg-white/5 border border-amber-400/20 text-left relative overflow-hidden shadow-inner max-h-36 overflow-y-auto">
+                            <div className="absolute top-2 right-3 text-[8px] font-black uppercase text-amber-400 tracking-widest animate-pulse flex items-center gap-1">
+                              <Mail className="w-2.5 h-2.5" /> Note
+                            </div>
+                            <p className="text-amber-200 text-xs italic leading-relaxed mt-1">"{loveNote}"</p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                  <p className="text-violet-300/70 text-xs mt-1.5">{activeTriggeredReminder.time}</p>
+                </div>
+
+                <div className="flex gap-3 w-full">
+                  <button onClick={() => {
+                    if (activeAlarmStop) activeAlarmStop();
+                    setActiveAlarmStop(null);
+                    
                     const snoozeTime = new Date(Date.now() + 5 * 60 * 1000);
                     const snoozeHHMM = `${String(snoozeTime.getHours()).padStart(2, "0")}:${String(snoozeTime.getMinutes()).padStart(2, "0")}`;
-                    
-                    const snoozedItem: Reminder = {
-                      id: `snooze-${Date.now()}`,
-                      title: `${activeTriggeredReminder.title} (Snoozed)`,
+                    API.createReminder({
+                      title: `${activeTriggeredReminder.title.split('|')[0].trim()} (Snoozed 5m)`,
                       time: snoozeHHMM,
                       repeat: "none",
-                      type: activeTriggeredReminder.type,
-                      isActive: true,
-                      createdAt: new Date().toISOString()
-                    };
+                      type: activeTriggeredReminder.type
+                    }).then(() => loadAllData(false)).catch(() => {});
                     
-                    setReminders(prev => [...prev, snoozedItem]);
                     setActiveTriggeredReminder(null);
                   }}
-                  className={`py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-extrabold border border-white/10 ${currentTheme.textPrimary} transition-colors cursor-pointer`}
-                >
-                  Snooze 5m
-                </button>
-                <button
-                  id="reminder-dismiss-btn"
-                  onClick={() => setActiveTriggeredReminder(null)}
-                  className={`py-3 rounded-2xl text-white text-xs font-extrabold ${currentTheme.accent} ${currentTheme.accentHover} shadow transition-colors cursor-pointer`}
-                >
-                  Dismiss
-                </button>
+                    className="flex-1 py-3 rounded-2xl bg-white/10 border border-white/15 text-white text-xs font-black active:scale-95 transition-transform cursor-pointer">
+                    Snooze
+                  </button>
+                  <button onClick={() => {
+                    if (activeAlarmStop) activeAlarmStop();
+                    setActiveAlarmStop(null);
+                    setActiveTriggeredReminder(null);
+                  }}
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-black shadow-lg active:scale-95 transition-transform cursor-pointer">
+                    Dismiss
+                  </button>
+                </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

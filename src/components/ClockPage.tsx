@@ -17,6 +17,8 @@ import {
   Bell, BellOff, Trash2, Plus, Volume2, Sparkles,
   Loader2, CheckCircle2, X, ChevronDown,
   AlarmClock, Edit3, Save, RefreshCw, Search,
+  Heart, Check, Mail, BookOpen, Droplet,
+  ChevronLeft, ChevronRight, Pill, Activity, Compass, Moon, Sun, Award
 } from "lucide-react";
 import { Reminder } from "../types.js";
 import { ThemeConfig } from "../lib/themes.js";
@@ -40,12 +42,22 @@ interface ParsedReminder {
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const TYPE_META: Record<Reminder["type"], { icon: string; gradient: string; label: string; border: string }> = {
-  anniversary: { icon: "💖", gradient: "from-pink-500 to-rose-500",   label: "Anniversary", border: "border-pink-400/30" },
-  birthday:    { icon: "🎂", gradient: "from-amber-400 to-orange-500",label: "Birthday",    border: "border-amber-400/30" },
-  prayer:      { icon: "🙏", gradient: "from-teal-400 to-cyan-500",   label: "Prayer",      border: "border-teal-400/30" },
-  medicine:    { icon: "💊", gradient: "from-blue-400 to-indigo-500", label: "Medicine",    border: "border-blue-400/30" },
-  custom:      { icon: "🌸", gradient: "from-purple-400 to-violet-500",label: "General",    border: "border-purple-400/30" },
+const TYPE_META: Record<Reminder["type"], { gradient: string; label: string; border: string }> = {
+  anniversary: { gradient: "from-pink-500 to-rose-500",   label: "Anniversary", border: "border-pink-400/30" },
+  birthday:    { gradient: "from-amber-400 to-orange-500",label: "Birthday",    border: "border-amber-400/30" },
+  prayer:      { gradient: "from-teal-400 to-cyan-500",   label: "Prayer",      border: "border-teal-400/30" },
+  medicine:    { gradient: "from-blue-400 to-indigo-500", label: "Medicine",    border: "border-blue-400/30" },
+  custom:      { gradient: "from-purple-400 to-violet-500",label: "General",    border: "border-purple-400/30" },
+};
+
+const getReminderIcon = (type: string, className = "w-5 h-5") => {
+  switch (type) {
+    case "anniversary": return <Heart className={className} />;
+    case "birthday": return <Award className={className} />;
+    case "prayer": return <Compass className={className} />;
+    case "medicine": return <Pill className={className} />;
+    default: return <Activity className={className} />;
+  }
 };
 
 const REPEAT_OPTS = ["none","daily","weekly","monthly","yearly"] as const;
@@ -227,7 +239,7 @@ function ReminderEditForm({
         </select>
         <select value={type} onChange={e => setType(e.target.value as Reminder["type"])}
           className={`px-3 py-2 text-xs rounded-xl border border-white/10 bg-white/5 ${theme.textPrimary} focus:outline-none focus:border-pink-400`}>
-          {TYPE_OPTS.map(t => <option key={t} value={t}>{TYPE_META[t].icon} {TYPE_META[t].label}</option>)}
+          {TYPE_OPTS.map(t => <option key={t} value={t}>{TYPE_META[t].label}</option>)}
         </select>
       </div>
       <div className="flex gap-2">
@@ -248,6 +260,55 @@ function ReminderEditForm({
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ClockPage({ reminders, onRefreshReminders, theme, session }: ClockPageProps) {
   const [time, setTime] = useState(new Date());
+
+  // Sub-tabs in Reminders (0: Alarms List, 1: Planner & Love Notes)
+  const [activeSubTab, setActiveSubTab] = useState(0);
+
+  // Daily task completed local tracking
+  const [completedIds, setCompletedIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("bloom_completed_reminders");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const todayYMD = new Date().toDateString();
+        if (parsed.date === todayYMD) {
+          return parsed.ids;
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  const handleToggleComplete = (id: string) => {
+    const isCompleted = completedIds.includes(id);
+    let next: string[];
+    if (isCompleted) {
+      next = completedIds.filter(x => x !== id);
+    } else {
+      next = [...completedIds, id];
+    }
+    setCompletedIds(next);
+    localStorage.setItem("bloom_completed_reminders", JSON.stringify({
+      date: new Date().toDateString(),
+      ids: next
+    }));
+  };
+
+  // Love note modal display state
+  const [openedLoveNote, setOpenedLoveNote] = useState<string | null>(null);
+
+  // Quick Preset modal / state
+  const [activePreset, setActivePreset] = useState<{ title: string; type: Reminder["type"]; note?: string } | null>(null);
+  const [presetTime, setPresetTime] = useState("08:00");
+  const [addingPreset, setAddingPreset] = useState(false);
+
+  // Admin Love Note creation form states
+  const [loveNoteTitle, setLoveNoteTitle] = useState("");
+  const [loveNoteTime, setLoveNoteTime] = useState("10:00");
+  const [loveNoteContent, setLoveNoteContent] = useState("");
+  const [sendingLoveNote, setSendingLoveNote] = useState(false);
+  const [loveNoteSuccess, setLoveNoteSuccess] = useState(false);
+
 
   // AI assistant
   const [aiInput, setAiInput] = useState("");
@@ -271,11 +332,6 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Active alarm
-  const [activeAlarm, setActiveAlarm] = useState<Reminder | null>(null);
-  const alarmStopRef = useRef<(() => void) | null>(null);
-  const triggeredRef = useRef<Record<string, string>>({});
-
   // Notification permission
   const [notifPerm, setNotifPerm] = useState(Notification.permission);
 
@@ -294,60 +350,10 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
 
   const greeting = useMemo(() => {
     const hr = new Date().getHours();
-    if (hr < 12) return "Good morning 🌸";
-    if (hr < 17) return "Good afternoon ✨";
-    return "Good evening 💕";
+    if (hr < 12) return "Good morning";
+    if (hr < 17) return "Good afternoon";
+    return "Good evening";
   }, []);
-
-  // ── Alarm checker (runs every 30s) ──
-  useEffect(() => {
-    const check = () => {
-      const now = new Date();
-      const hhmm = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-      const ymd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-      const key = `${ymd}-${hhmm}`;
-
-      reminders.forEach(r => {
-        if (!r.isActive || r.time !== hhmm) return;
-        if (triggeredRef.current[r.id] === key) return;
-
-        let match = false;
-        if (r.repeat === "none")    match = !r.date || r.date === ymd;
-        if (r.repeat === "daily")   match = true;
-        if (r.repeat === "weekly")  match = now.getDay() === new Date(r.date || r.createdAt).getDay();
-        if (r.repeat === "monthly") match = now.getDate() === new Date(r.date || r.createdAt).getDate();
-        if (r.repeat === "yearly") {
-          const bd = new Date(r.date || r.createdAt);
-          match = now.getMonth() === bd.getMonth() && now.getDate() === bd.getDate();
-        }
-
-        if (match) {
-          triggeredRef.current[r.id] = key;
-          setActiveAlarm(r);
-          alarmStopRef.current = playMelodiousAlarm(4);
-          sendNotification(`⏰ ${r.title}`, `Your ${TYPE_META[r.type].label} reminder is ringing!`);
-        }
-      });
-    };
-    check();
-    const interval = setInterval(check, 30000);
-    return () => clearInterval(interval);
-  }, [reminders]);
-
-  const stopAlarm = useCallback(() => {
-    alarmStopRef.current?.();
-    alarmStopRef.current = null;
-    setActiveAlarm(null);
-  }, []);
-
-  const snoozeAlarm = useCallback(() => {
-    stopAlarm();
-    if (!activeAlarm) return;
-    const snoozeAt = new Date(Date.now() + 5 * 60 * 1000);
-    const hhmm = `${String(snoozeAt.getHours()).padStart(2,"0")}:${String(snoozeAt.getMinutes()).padStart(2,"0")}`;
-    API.createReminder({ title: `${activeAlarm.title} (Snoozed 5m)`, time: hhmm, repeat: "none", type: activeAlarm.type })
-      .then(onRefreshReminders).catch(() => {});
-  }, [activeAlarm, stopAlarm, onRefreshReminders]);
 
   // ── AI handler ──
   const handleAskAI = async () => {
@@ -422,20 +428,115 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
 
   const activeCount = reminders.filter(r => r.isActive).length;
 
+  const handleCreatePreset = async (title: string, type: Reminder["type"], note?: string) => {
+    try {
+      setAddingPreset(true);
+      const fullTitle = note ? `${title} | ${note}` : title;
+      await API.createReminder({
+        title: fullTitle,
+        time: presetTime,
+        repeat: "daily",
+        type: type
+      });
+      onRefreshReminders();
+      setActivePreset(null);
+    } catch (err) {
+      console.error("Failed to create preset reminder:", err);
+    } finally {
+      setAddingPreset(false);
+    }
+  };
+
+  const handleSendLoveNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loveNoteTitle.trim() || !loveNoteContent.trim()) return;
+    try {
+      setSendingLoveNote(true);
+      const fullTitle = `${loveNoteTitle.trim()} | ${loveNoteContent.trim()}`;
+      await API.createReminder({
+        title: fullTitle,
+        time: loveNoteTime,
+        repeat: "daily",
+        type: "custom"
+      });
+      onRefreshReminders();
+      setLoveNoteTitle("");
+      setLoveNoteContent("");
+      setLoveNoteSuccess(true);
+      setTimeout(() => setLoveNoteSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to send love note reminder:", err);
+    } finally {
+      setSendingLoveNote(false);
+    }
+  };
+
   // ─────────────────────────────────── RENDER ─────────────────────────────────
+  const isAuthorized = true;
+
   return (
     <div className="w-full max-w-5xl mx-auto px-3 sm:px-5 pt-4 pb-28">
 
       {/* ════════ HEADER ════════ */}
       <div className="text-center mb-6 mt-2">
         <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${theme.textPrimary}`}>
-          ⏰ Reminders
+          Reminders
         </h1>
         <p className={`text-xs mt-1 ${theme.textSecondary} italic`}>{greeting}</p>
       </div>
 
-      {/* ════════ TOP ROW: CLOCK + NOTIFICATION PERMISSION ════════ */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 items-center sm:items-start">
+      {/* Sub-tabs segment switcher (Only visible if isAuthorized) */}
+      {isAuthorized && (
+        <div className="flex justify-center mb-6 select-none">
+          <div className="flex bg-black/10 dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/5 backdrop-blur-md">
+            <button
+              onClick={() => setActiveSubTab(0)}
+              className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${
+                activeSubTab === 0
+                  ? "bg-[#EC708B] text-white shadow-md"
+                  : `${theme.textSecondary} hover:text-[#EC708B]`
+              }`}
+            >
+              Alarms
+            </button>
+            <button
+              onClick={() => setActiveSubTab(1)}
+              className={`px-5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                activeSubTab === 1
+                  ? "bg-[#EC708B] text-white shadow-md"
+                  : `${theme.textSecondary} hover:text-[#EC708B]`
+              }`}
+            >
+              Planner & Notes
+            </button>
+          </div>
+        </div>
+      )}
+
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.3}
+        onDragEnd={(e, info) => {
+          if (info.offset.x < -100 && activeSubTab === 0 && isAuthorized) {
+            setActiveSubTab(1);
+          } else if (info.offset.x > 100 && activeSubTab === 1) {
+            setActiveSubTab(0);
+          }
+        }}
+        className="w-full relative"
+      >
+        <AnimatePresence mode="wait">
+          {activeSubTab === 0 ? (
+            <motion.div
+              key="alarms-view"
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 15 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* ════════ TOP ROW: CLOCK + NOTIFICATION PERMISSION ════════ */}
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 items-center sm:items-start">
 
         {/* Analog Clock */}
         <div className="flex flex-col items-center gap-3 shrink-0">
@@ -528,12 +629,14 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                 exit={{ opacity:0, y:8 }}
                 className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-pink-500/5 p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">{TYPE_META[aiSuggestion.type as Reminder["type"]]?.icon}</span>
+                  <div className="p-1 rounded-xl bg-violet-500/20 text-violet-400">
+                    {getReminderIcon(aiSuggestion.type as Reminder["type"], "w-5 h-5")}
+                  </div>
                   <div className="flex-1">
                     <p className={`text-sm font-bold ${theme.textPrimary}`}>{aiSuggestion.title}</p>
                     <div className="flex flex-wrap gap-2 mt-1.5">
                       <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70">
-                        🕒 {aiSuggestion.time}
+                        {aiSuggestion.time}
                       </span>
                       {aiSuggestion.date && (
                         <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70">
@@ -606,7 +709,7 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                   </select>
                   <select value={mType} onChange={e => setMType(e.target.value as Reminder["type"])}
                     className={`px-3 py-2 text-xs rounded-xl border ${theme.border} bg-white/5 ${theme.textPrimary} focus:outline-none focus:border-pink-400`}>
-                    {TYPE_OPTS.map(t => <option key={t} value={t}>{TYPE_META[t].icon} {TYPE_META[t].label}</option>)}
+                    {TYPE_OPTS.map(t => <option key={t} value={t}>{TYPE_META[t].label}</option>)}
                   </select>
                 </div>
                 <div className="flex gap-2">
@@ -662,7 +765,7 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                   ? `bg-gradient-to-r ${f === "all" || f === "active" ? "from-pink-500 to-violet-500" : TYPE_META[f as Reminder["type"]]?.gradient} text-white shadow-md`
                   : `bg-white/5 border ${theme.border} ${theme.textSecondary}`
               }`}>
-              {f === "all" ? "All 🌸" : f === "active" ? "🔔 Active" : `${TYPE_META[f as Reminder["type"]]?.icon} ${TYPE_META[f as Reminder["type"]]?.label}`}
+              {f === "all" ? "All" : f === "active" ? "Active" : TYPE_META[f as Reminder["type"]]?.label}
             </button>
           ))}
         </div>
@@ -693,14 +796,17 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                 >
                   <div className="flex items-center gap-3 p-3.5">
                     {/* Type icon */}
-                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-xl shadow-md shrink-0 transition-all duration-300 ${!r.isActive ? "grayscale opacity-40" : ""}`}>
-                      {meta.icon}
+                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shadow-md shrink-0 transition-all duration-300 ${!r.isActive ? "opacity-40" : ""}`}>
+                      {getReminderIcon(r.type, "w-5 h-5 text-white")}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold truncate transition-all ${r.isActive ? theme.textPrimary : "text-gray-500 line-through"}`}>
-                        {r.title}
+                      <p className={`text-xs font-bold truncate transition-all flex items-center gap-1.5 ${r.isActive ? theme.textPrimary : "text-gray-500 line-through"}`}>
+                        {r.title.split("|")[0].trim()}
+                        {r.title.includes("|") && (
+                          <Mail className="w-3 h-3 text-pink-400 inline shrink-0" />
+                        )}
                       </p>
                       <div className="flex items-center flex-wrap gap-1.5 mt-1">
                         <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : "text-gray-600"}`}>
@@ -739,11 +845,10 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                             layout
                             animate={{ x: r.isActive ? 22 : 0 }}
                             transition={{ type:"spring", stiffness:600, damping:35 }}
-                            className={`w-5 h-5 rounded-full shadow-md flex items-center justify-center text-[8px] font-black transition-colors ${
-                              r.isActive ? "bg-white text-emerald-600" : "bg-gray-400 text-gray-600"
-                            }`}>
-                            {r.isActive ? "✓" : "✕"}
-                          </motion.div>
+                            className={`w-5 h-5 rounded-full shadow-md flex items-center justify-center transition-colors ${
+                              r.isActive ? "bg-white" : "bg-gray-300"
+                            }`}
+                          />
                         </button>
                         <span className={`text-[8px] font-black tracking-widest uppercase ${r.isActive ? "text-emerald-400" : "text-gray-500"}`}>
                           {r.isActive ? "ON" : "OFF"}
@@ -789,63 +894,346 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
           </AnimatePresence>
         </div>
       </div>
-
-      {/* ════════ ACTIVE ALARM OVERLAY ════════ */}
-      <AnimatePresence>
-        {activeAlarm && (
-          <motion.div
-            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl"
-          >
+            </motion.div>
+          ) : (
             <motion.div
-              initial={{ scale:0.8, y:60 }} animate={{ scale:1, y:0 }} exit={{ scale:0.8, y:60 }}
-              transition={{ type:"spring", stiffness:320, damping:26 }}
-              className="w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl"
-              style={{ background:"linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95)" }}
+              key="planner-view"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6"
             >
-              {/* Pulsing ring */}
-              <div className="relative flex flex-col items-center pt-10 pb-6 px-6 text-center space-y-5">
-                <motion.div
-                  animate={{ scale:[1, 1.15, 1] }}
-                  transition={{ duration:1.2, repeat:Infinity, ease:"easeInOut" }}
-                  className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shadow-2xl text-5xl"
-                >
-                  {TYPE_META[activeAlarm.type].icon}
-                </motion.div>
+              {/* Daily Progress Card */}
+              {(() => {
+                const dailyReminders = reminders.filter(r => r.repeat === "daily" && r.isActive);
+                const completedDaily = completedIds.filter(id => dailyReminders.some(r => r.id === id));
+                const percent = dailyReminders.length > 0 ? Math.round((completedDaily.length / dailyReminders.length) * 100) : 0;
+                
+                return (
+                  <div className={`rounded-3xl p-6 border ${theme.card} ${theme.border} ${theme.shadow} flex flex-col items-center text-center space-y-4`}>
+                    <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textSecondary}`}>
+                      Daily Progress
+                    </h3>
+                    
+                    {/* SVG Glowing Progress Circle */}
+                    <div className="relative w-28 h-28 flex items-center justify-center select-none">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle
+                          cx="56" cy="56" r="48"
+                          className="stroke-gray-205 dark:stroke-white/5 fill-none"
+                          strokeWidth="8"
+                        />
+                        <motion.circle
+                          cx="56" cy="56" r="48"
+                          className="stroke-[#EC708B] fill-none"
+                          strokeWidth="8"
+                          strokeDasharray={2 * Math.PI * 48}
+                          animate={{ strokeDashoffset: (2 * Math.PI * 48) * (1 - percent / 100) }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center justify-center">
+                        <span className={`text-2xl font-black ${theme.textPrimary}`}>{percent}%</span>
+                        <span className={`text-[8px] font-black uppercase tracking-wider ${theme.textSecondary}`}>Completed</span>
+                      </div>
+                    </div>
 
-                {/* Pulse rings */}
-                <div className="absolute top-10 left-1/2 -translate-x-1/2">
-                  {[1,2,3].map(i => (
-                    <motion.div key={i}
-                      animate={{ scale:[1, 2.5+i*0.3], opacity:[0.5, 0] }}
-                      transition={{ duration:2, repeat:Infinity, delay:i*0.4, ease:"easeOut" }}
-                      className="absolute w-24 h-24 rounded-full border-2 border-pink-400/40 -translate-x-1/2 -translate-y-0" />
+                    <div className="space-y-1">
+                      <p className={`text-xs ${theme.textSecondary} italic`}>
+                        {percent === 100 ? "Your daily checklist is completed!" : "Track your scheduled tasks for the day."}
+                      </p>
+                    </div>
+
+                    {/* Daily Checklist */}
+                    {dailyReminders.length > 0 ? (
+                      <div className="w-full text-left space-y-2 pt-2">
+                        {dailyReminders.map(r => {
+                          const isDone = completedIds.includes(r.id);
+                          const cleanTitle = r.title.split("|")[0].trim();
+                          return (
+                            <button
+                              key={r.id}
+                              onClick={() => handleToggleComplete(r.id)}
+                              className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ${
+                                isDone 
+                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                                  : `${theme.card} border-white/5 ${theme.textPrimary} hover:border-[#EC708B]/30`
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+                                  isDone ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-300 dark:border-white/20"
+                                }`}>
+                                  {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                </div>
+                                <span className={`text-xs font-bold ${isDone ? "line-through opacity-70" : ""}`}>
+                                  {cleanTitle}
+                                </span>
+                              </div>
+                              <span className={`text-[9px] font-bold ${isDone ? "text-emerald-400" : theme.textSecondary}`}>
+                                {r.time}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className={`text-xs ${theme.textSecondary} opacity-70 italic py-2`}>No active daily reminders scheduled.</p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Quick presets */}
+              <div className="space-y-3">
+                <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textSecondary} px-1`}>
+                  Quick presets
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { title: "Drink Water", iconKey: "water", type: "custom", note: "Keep drinking water to stay fresh and glowing!" },
+                    { title: "Vitamins & Meds", iconKey: "medicine", type: "medicine", note: "Remember to take your morning vitamins and meds!" },
+                    { title: "Self-Care Breath", iconKey: "selfcare", type: "custom", note: "Take a 5-minute break, stretch, and relax!" },
+                    { title: "Prayer Moment", iconKey: "prayer", type: "prayer", note: "Spend a quiet moment in prayer and gratitude." },
+                  ].map((p, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setActivePreset({ title: p.title, type: p.type as any, note: p.note });
+                        setPresetTime("08:00");
+                      }}
+                      className={`p-4 rounded-3xl border flex flex-col items-center text-center space-y-2.5 transition-all duration-305 active:scale-95 ${theme.card} ${theme.border} hover:border-[#EC708B]/40 shadow-sm`}
+                    >
+                      <div className="p-2 rounded-2xl bg-white/5 border border-white/5">
+                        {p.iconKey === "water" && <Droplet className="w-5 h-5 text-blue-400" />}
+                        {p.iconKey === "medicine" && <Pill className="w-5 h-5 text-emerald-400" />}
+                        {p.iconKey === "selfcare" && <Activity className="w-5 h-5 text-purple-400" />}
+                        {p.iconKey === "prayer" && <Compass className="w-5 h-5 text-amber-400" />}
+                      </div>
+                      <div>
+                        <h4 className={`text-xs font-black ${theme.textPrimary}`}>{p.title}</h4>
+                        <span className={`text-[8px] font-black uppercase text-[#EC708B]`}>Daily Preset</span>
+                      </div>
+                    </button>
                   ))}
                 </div>
+              </div>
 
-                <div>
-                  <p className="text-xs text-violet-300 font-bold uppercase tracking-widest mb-1">
-                    {TYPE_META[activeAlarm.type].label} Reminder
-                  </p>
-                  <h2 className="text-2xl font-black text-white tracking-tight">{activeAlarm.title}</h2>
-                  <p className="text-violet-300/70 text-xs mt-1">🕒 {activeAlarm.time}</p>
+              {/* Love Notes */}
+              <div className="space-y-4">
+                {/* Scheduled Letters List */}
+                <div className="space-y-3">
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textSecondary} px-1`}>
+                    Scheduled Love Notes
+                  </h3>
+                  {(() => {
+                    const noteReminders = reminders.filter(r => r.title.includes("|") && r.isActive);
+                    if (noteReminders.length === 0) {
+                      return (
+                        <div className={`rounded-3xl p-5 border border-dashed ${theme.border} text-center py-6`}>
+                          <p className={`text-xs ${theme.textSecondary} italic opacity-75`}>No love notes scheduled yet.</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-2 gap-3">
+                        {noteReminders.map(r => {
+                          const parts = r.title.split("|");
+                          const mainTitle = parts[0].trim();
+                          const noteContent = parts[1].trim();
+                          return (
+                            <button
+                              key={r.id}
+                              onClick={() => setOpenedLoveNote(noteContent)}
+                              className={`p-4 rounded-3xl border flex flex-col items-center text-center space-y-2.5 transition-all duration-300 active:scale-95 bg-white/5 border-white/10 shadow-sm relative overflow-hidden`}
+                            >
+                              <div className="absolute top-2 right-2.5 text-[8px] font-bold text-[#EC708B]">Time: {r.time}</div>
+                              <div className="p-2 rounded-2xl bg-pink-500/10 text-pink-400">
+                                <Mail className="w-5 h-5 animate-pulse" />
+                              </div>
+                              <div>
+                                <h4 className={`text-xs font-black ${theme.textPrimary} truncate max-w-[120px]`}>{mainTitle}</h4>
+                                <span className={`text-[8px] font-black uppercase text-pink-400 block mt-0.5`}>Read Note</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                <div className="flex gap-3 w-full">
-                  <button onClick={snoozeAlarm}
-                    className="flex-1 py-3 rounded-2xl bg-white/10 border border-white/15 text-white text-xs font-black active:scale-95 transition-transform">
-                    😴 Snooze 5m
-                  </button>
-                  <button onClick={stopAlarm}
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-black shadow-lg active:scale-95 transition-transform">
-                    ✓ Dismiss
-                  </button>
+                {/* Write / Schedule form */}
+                <div className="space-y-3 pt-2">
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textSecondary} px-1`}>
+                    Write a Love Note
+                  </h3>
+                  <form onSubmit={handleSendLoveNote} className={`rounded-3xl p-5 border ${theme.card} ${theme.border} ${theme.shadow} space-y-4`}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={`block text-[9px] font-bold uppercase tracking-wider ${theme.textSecondary} mb-1`}>Note Title</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g., Sleep Time"
+                          value={loveNoteTitle}
+                          onChange={e => setLoveNoteTitle(e.target.value)}
+                          className={`w-full px-3 py-2 text-xs font-semibold rounded-xl border outline-none focus:ring-1 focus:ring-[#EC708B] bg-transparent ${theme.border} ${theme.textPrimary}`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-[9px] font-bold uppercase tracking-wider ${theme.textSecondary} mb-1`}>Time</label>
+                        <input
+                          type="time"
+                          required
+                          value={loveNoteTime}
+                          onChange={e => setLoveNoteTime(e.target.value)}
+                          className={`w-full px-3 py-2 text-xs font-semibold rounded-xl border outline-none focus:ring-1 focus:ring-[#EC708B] bg-transparent ${theme.border} ${theme.textPrimary}`}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={`block text-[9px] font-bold uppercase tracking-wider ${theme.textSecondary} mb-1`}>Your Message</label>
+                      <textarea
+                        required
+                        rows={3}
+                        placeholder="Type a heartwarming note that rings on her phone..."
+                        value={loveNoteContent}
+                        onChange={e => setLoveNoteContent(e.target.value)}
+                        className={`w-full px-3 py-2 text-xs font-semibold rounded-xl border outline-none focus:ring-1 focus:ring-[#EC708B] bg-transparent ${theme.border} ${theme.textPrimary}`}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={sendingLoveNote}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-bold text-xs shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+                    >
+                      {sendingLoveNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Schedule Note"}
+                    </button>
+                    
+                    {loveNoteSuccess && (
+                      <p className="text-[10px] font-bold text-center text-emerald-400 animate-pulse">
+                        Note scheduled successfully!
+                      </p>
+                    )}
+                  </form>
                 </div>
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Visual Navigation Arrow Hints at the Bottom */}
+      {isAuthorized && (
+        <div className="flex justify-center mt-6 select-none">
+          <button
+            onClick={() => setActiveSubTab(activeSubTab === 0 ? 1 : 0)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all active:scale-95 shadow-sm text-xs font-black ${
+              activeSubTab === 0 
+                ? "bg-[#EC708B]/10 border-[#EC708B]/35 text-[#EC708B] hover:bg-[#EC708B]/15" 
+                : "bg-white/5 border-white/10 text-gray-400 hover:text-[#EC708B] hover:border-[#EC708B]/30"
+            }`}
+          >
+            {activeSubTab === 0 ? (
+              <>
+                <span>Planner & Notes</span>
+                <ChevronRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                <ChevronLeft className="w-4 h-4" />
+                <span>Alarms & Clock</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+
+      {/* Preset Custom Time Selection Modal */}
+      {activePreset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
+          <motion.div initial={{ opacity:0, scale:0.93 }} animate={{ opacity:1, scale:1 }}
+            className={`w-full max-w-xs rounded-3xl p-6 ${theme.card} border ${theme.border} shadow-2xl space-y-4`}
+          >
+            <div className="text-center space-y-2">
+              <div className="flex justify-center">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5 inline-block">
+                  {activePreset.type === 'medicine' ? <Pill className="w-8 h-8 text-emerald-400" /> : activePreset.type === 'prayer' ? <Compass className="w-8 h-8 text-amber-400" /> : <Droplet className="w-8 h-8 text-blue-400" />}
+                </div>
+              </div>
+              <h3 className={`text-base font-black ${theme.textPrimary} mt-2`}>Schedule {activePreset.title}</h3>
+              <p className={`text-xs ${theme.textSecondary} mt-1`}>Select alarm time for your daily routine:</p>
+            </div>
+            
+            <div className="flex justify-center">
+              <input
+                type="time"
+                value={presetTime}
+                onChange={e => setPresetTime(e.target.value)}
+                className={`px-4 py-2.5 rounded-xl border text-sm font-bold text-center w-36 outline-none focus:ring-2 focus:ring-[#EC708B]/40 transition-all ${theme.border} bg-transparent ${theme.textPrimary}`}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setActivePreset(null)}
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl border ${theme.border} ${theme.textSecondary} active:scale-95 transition-transform`}>
+                Cancel
+              </button>
+              <button
+                disabled={addingPreset}
+                onClick={() => handleCreatePreset(activePreset.title, activePreset.type, activePreset.note)}
+                className="flex-1 py-2.5 text-xs font-bold text-white bg-[#EC708B] hover:bg-[#db5d78] rounded-xl active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                {addingPreset ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Schedule"}
+              </button>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
+
+      {/* Love Letter Display Modal Overlay */}
+      {openedLoveNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md select-none">
+          <motion.div
+            initial={{ opacity:0, y:30, scale:0.95 }}
+            animate={{ opacity:1, y:0, scale:1 }}
+            className="w-full max-w-sm rounded-[32px] p-6 bg-[#FCF8F2] border-2 border-amber-400/30 shadow-[0_8px_32px_rgba(252,211,77,0.2)] text-gray-800 font-serif relative"
+          >
+            <button
+              onClick={() => setOpenedLoveNote(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-black/5 text-gray-400 hover:text-gray-600 transition-all active:scale-90"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            <div className="space-y-4 text-center">
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-xl mx-auto shadow-sm animate-bounce text-amber-800">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-amber-900 uppercase tracking-widest font-sans">
+                  Love note from Him
+                </h4>
+                <p className="text-[10px] text-gray-500 font-sans mt-0.5">Scheduled Daily</p>
+              </div>
+              <hr className="border-t border-dashed border-amber-900/10" />
+              <p className="text-sm leading-relaxed text-amber-950 italic whitespace-pre-line px-2">
+                "{openedLoveNote}"
+              </p>
+              <hr className="border-t border-dashed border-amber-900/10" />
+              <div className="flex justify-center gap-1.5">
+                {[...Array(3)].map((_, i) => (
+                  <Heart key={i} className="w-3.5 h-3.5 text-red-500 fill-current animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* ════════ DELETE CONFIRM ════════ */}
       <AnimatePresence>
