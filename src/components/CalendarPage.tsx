@@ -187,7 +187,21 @@ export default function CalendarPage({
 
   const getGreeting = () => {
     const hrs = today.getHours();
-    const name = session.username ? session.username.split(" ")[0] : "love";
+    
+    let name = "love";
+    if (session.role === 'viewer') {
+      const nicknames = [
+        "my butterfly", "my beautiful flower", "my chamcham", "my rasmalai",
+        "my kaju katli", "my gudiya", "my sweetheart", "my love", 
+        "my cutiepie", "my sunshine", "my rainbow", "mine love"
+      ];
+      // Use the day of the year so it changes exactly once per day
+      const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+      name = nicknames[dayOfYear % nicknames.length];
+    } else {
+      name = session.username ? session.username.split(" ")[0] : "love";
+    }
+
     if (hrs < 12) return `Good morning, ${name} 🌸`;
     if (hrs < 17) return `Good afternoon, ${name} ✨`;
     return `Good evening, ${name} 💕`;
