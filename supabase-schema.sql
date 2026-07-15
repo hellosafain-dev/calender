@@ -186,12 +186,19 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('photos', 'photos', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Allow public access to view photos
-CREATE POLICY "Public View Access" 
-ON storage.objects FOR SELECT 
-USING ( bucket_id = 'photos' );
+-- Make policies idempotent by checking if they exist first
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Public View Access' AND tablename = 'objects'
+  ) THEN
+    CREATE POLICY "Public View Access" ON storage.objects FOR SELECT USING ( bucket_id = 'photos' );
+  END IF;
 
--- Allow unrestricted uploads to the photos bucket (since auth is handled by our Vercel API layer)
-CREATE POLICY "Public Upload Access" 
-ON storage.objects FOR INSERT 
-WITH CHECK ( bucket_id = 'photos' );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Public Upload Access' AND tablename = 'objects'
+  ) THEN
+    CREATE POLICY "Public Upload Access" ON storage.objects FOR INSERT WITH CHECK ( bucket_id = 'photos' );
+  END IF;
+END
+$$;
