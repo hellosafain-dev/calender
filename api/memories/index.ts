@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabase, dbToMemory, generateId } from '../../lib/supabase.js';
 import { requireAuth, requireAdmin } from '../../lib/vercel-auth.js';
+import { notifyFlowerUpdate } from '../../lib/vercel-push.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
@@ -64,6 +65,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await supabase.from('settings').upsert({ key: 'theme', value: targetTheme }, { onConflict: 'key' });
       }
 
+      await notifyFlowerUpdate(flowerId, title);
+
       return res.json({ success: true, memory: dbToMemory(updated), updated: true });
     }
 
@@ -91,6 +94,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (targetTheme && !isDraft) {
       await supabase.from('settings').upsert({ key: 'theme', value: targetTheme }, { onConflict: 'key' });
+    }
+
+    if (!isDraft) {
+      await notifyFlowerUpdate(flowerId, title);
     }
 
     return res.json({ success: true, memory: dbToMemory(created) });

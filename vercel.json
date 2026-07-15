@@ -3,6 +3,12 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
+  "crons": [
+    {
+      "path": "/api/push/cron-alarm",
+      "schedule": "* * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/backup/export", "destination": "/api/backup" },
     { "source": "/api/backup/restore", "destination": "/api/backup" },
