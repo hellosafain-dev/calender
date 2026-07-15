@@ -4,10 +4,8 @@
   "installCommand": "npm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/backup/export", "destination": "/api/backup" },
-    { "source": "/api/backup/restore", "destination": "/api/backup" },
-    { "source": "/api/memories/:id/delete", "destination": "/api/memories/:id?action=delete" },
-    { "source": "/api/memories/:id/toggle-favorite", "destination": "/api/memories/:id?action=toggle-favorite" }
+    { "source": "/api/(.*)", "destination": "/api/index.ts" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
