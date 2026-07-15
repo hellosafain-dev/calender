@@ -114,3 +114,21 @@ VALUES
    TRUE, FALSE, '2026-07-14T10:00:00Z', '2026-07-14T10:00:00Z')
 
 ON CONFLICT (id) DO NOTHING;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4. STORAGE BUCKETS & POLICIES
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Create the 'photos' bucket for memory images if it doesn't exist
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('photos', 'photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow public access to view photos
+CREATE POLICY "Public View Access" 
+ON storage.objects FOR SELECT 
+USING ( bucket_id = 'photos' );
+
+-- Allow unrestricted uploads to the photos bucket (since auth is handled by our Vercel API layer)
+CREATE POLICY "Public Upload Access" 
+ON storage.objects FOR INSERT 
+WITH CHECK ( bucket_id = 'photos' );
