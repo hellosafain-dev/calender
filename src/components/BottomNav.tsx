@@ -4,7 +4,7 @@
  */
 
 import { motion } from "motion/react";
-import { Heart, Clock, Settings } from "lucide-react";
+import { Heart, Clock, Settings, Target, BookHeart, Home } from "lucide-react";
 import { ThemeConfig } from "../lib/themes.js";
 import DynamicCalendarIcon from "./DynamicCalendarIcon.js";
 
@@ -16,10 +16,11 @@ interface BottomNavProps {
 
 export default function BottomNav({ activeTab, setActiveTab, theme }: BottomNavProps) {
   const navItems = [
-    { id: 0, label: "Calendar" },
-    { id: 1, label: "Timeline", icon: Heart },
-    { id: 2, label: "Reminders", icon: Clock },
-    { id: 3, label: "Settings", icon: Settings },
+    { id: 0, label: "Home", icon: Home },
+    { id: 1, label: "Planner", icon: Target },
+    { id: 2, label: "Calendar" },
+    { id: 3, label: "Journal", icon: BookHeart },
+    { id: 4, label: "Settings", icon: Settings },
   ];
 
   return (
