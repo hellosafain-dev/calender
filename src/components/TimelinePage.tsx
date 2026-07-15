@@ -411,7 +411,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
         </div>
       )}
 
-      {/* ── Premium Memory Modal (Shared Layout Transition) ── */}
+      {/* ── Premium Memory Modal ── */}
       <AnimatePresence>
         {activeMemory && (
           <>
@@ -423,140 +423,156 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={closeMemory}
-              className="fixed inset-0 z-40 bg-black/75 backdrop-blur-2xl"
+              className="fixed inset-0 z-40 bg-black/75 backdrop-blur-xl"
             />
 
-            {/* Card — morphs out of the watch icon via layoutId */}
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 pointer-events-none">
+            {/* Card — Apple-style bottom sheet on mobile, centered on desktop */}
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
               <motion.div
                 layoutId={`watch-icon-${activeMemory.id}`}
                 initial={{ borderRadius: "50%" }}
-                animate={{ borderRadius: "32px" }}
+                animate={{ borderRadius: "28px" }}
                 exit={{ borderRadius: "50%", opacity: 0, scale: 0.6 }}
                 transition={{ type: "spring", stiffness: 340, damping: 28 }}
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.3}
+                dragElastic={0.25}
                 onDragEnd={(_, info) => {
                   if (info.offset.y > 80) closeMemory();
                 }}
-                className="relative w-full sm:max-w-lg overflow-hidden pointer-events-auto"
+                className="relative w-full sm:max-w-lg overflow-hidden pointer-events-auto rounded-t-[28px] sm:rounded-[28px] flex flex-col shadow-2xl cursor-grab active:cursor-grabbing select-none"
                 style={{
                   background: getIconGradient(activeMemory.id, !!activeMemory.isFavorite),
                   maxHeight: "92dvh",
                   willChange: "transform",
                 }}
               >
-                {/* Hero Image */}
-                <div className="relative w-full overflow-hidden" style={{ height: "clamp(200px, 45vw, 320px)" }}>
+                {/* Drag indicator (mobile) */}
+                <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0 relative z-20">
+                  <div className="w-9 h-1 rounded-full bg-white/40" />
+                </div>
+
+                {/* Hero Image - adaptive height, natural proportions */}
+                <div className="relative w-full bg-black/30 shrink-0 overflow-hidden" style={{ maxHeight: "50dvh" }}>
                   <motion.img
-                    initial={{ opacity: 0, scale: 1.08 }}
+                    initial={{ opacity: 0, scale: 1.05 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.15, duration: 0.4 }}
+                    transition={{ delay: 0.12, duration: 0.35 }}
                     src={activeMemory.photos[photoIndex] || getUnsplashFlowerUrl(activeMemory.flowerId)}
                     alt={activeMemory.title}
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover pointer-events-none"
+                    className="w-full h-auto max-h-[50dvh] object-contain mx-auto pointer-events-none"
                     style={{ willChange: "transform" }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                  {/* Drag handle */}
-                  <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/40" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
                   {/* Photo arrows */}
                   {activeMemory.photos.length > 1 && (
                     <>
                       <button
                         onClick={(e) => { e.stopPropagation(); setPhotoIndex((p) => (p > 0 ? p - 1 : activeMemory.photos.length - 1)); }}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-md text-white active:scale-90"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-md text-white active:scale-90 transition-transform"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setPhotoIndex((p) => (p < activeMemory.photos.length - 1 ? p + 1 : 0)); }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-md text-white active:scale-90"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-md text-white active:scale-90 transition-transform"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
+
+                      {/* Photo dots */}
+                      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                        {activeMemory.photos.map((_, pIdx) => (
+                          <button
+                            key={pIdx}
+                            onClick={() => setPhotoIndex(pIdx)}
+                            className={`rounded-full transition-all duration-300 ${
+                              photoIndex === pIdx ? "bg-white w-5 h-1.5" : "bg-white/40 w-1.5 h-1.5"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </>
                   )}
 
                   {/* Close */}
                   <button
                     onClick={closeMemory}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20 active:scale-90"
+                    className="absolute top-3 right-3 p-2 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/15 active:scale-90 transition-transform"
                   >
                     <X className="w-4 h-4" />
                   </button>
 
-                  {/* Date badge */}
+                  {/* Favorite badge */}
+                  {activeMemory.isFavorite && (
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-pink-500/90 backdrop-blur-md text-white text-[10px] font-extrabold flex items-center gap-1 shadow-lg">
+                      <Heart className="w-3 h-3 fill-current" /> Favorite
+                    </div>
+                  )}
+
+                  {/* Date badge over image */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="absolute bottom-4 left-4 flex flex-col"
+                    className="absolute bottom-3 left-3 flex flex-col"
                   >
-                    <span className="text-white/70 text-[10px] font-extrabold uppercase tracking-widest">
+                    <span className="text-white/60 text-[9px] font-extrabold uppercase tracking-widest">
                       {new Date(activeMemory.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
                     </span>
-                    <span className="text-white text-2xl font-black leading-tight">
+                    <span className="text-white text-lg font-black leading-tight drop-shadow-md">
                       {new Date(activeMemory.date + "T00:00:00").toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   </motion.div>
-
-                  {/* Favorite badge */}
-                  {activeMemory.isFavorite && (
-                    <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-pink-500 text-white text-[10px] font-extrabold flex items-center gap-1 shadow-lg">
-                      <Heart className="w-3 h-3 fill-current" /> Favorite
-                    </div>
-                  )}
                 </div>
 
-                {/* Content */}
+                {/* Content Section - Scrollable */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.18, duration: 0.3 }}
-                  className="overflow-y-auto"
+                  className="overflow-y-auto flex-1"
                   style={{
-                    maxHeight: "calc(92dvh - clamp(200px, 45vw, 320px))",
                     background: "rgba(0,0,0,0.55)",
                     backdropFilter: "blur(24px)",
                   }}
                 >
-                  <div className="p-5 space-y-5">
+                  <div className="p-4 sm:p-5 space-y-4">
                     {/* Flower accent */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{FLOWERS[activeMemory.flowerId]?.emoji}</span>
-                      <div>
-                        <p className="text-white font-extrabold text-base">{activeMemory.title}</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-xl shrink-0">
+                        {FLOWERS[activeMemory.flowerId]?.emoji}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white font-extrabold text-[15px] truncate">{activeMemory.title}</p>
                         <p className="text-pink-300 text-[10px] font-bold uppercase tracking-wider">
-                          {FLOWERS[activeMemory.flowerId]?.name} • {FLOWERS[activeMemory.flowerId]?.emotion}
+                          {FLOWERS[activeMemory.flowerId]?.name} · {FLOWERS[activeMemory.flowerId]?.emotion}
                         </p>
                       </div>
                     </div>
 
                     {/* Note */}
-                    <p className="text-white/80 text-sm leading-relaxed font-medium whitespace-pre-wrap">
+                    <p className="text-white/80 text-[13px] leading-relaxed font-medium whitespace-pre-wrap">
                       {activeMemory.note}
                     </p>
 
                     {/* Tags */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {activeMemory.mood && (
-                        <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/80 text-[11px] font-bold capitalize">
-                          {activeMemory.mood} mood
+                        <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/10 text-white/80 text-[10px] font-bold capitalize">
+                          {activeMemory.mood}
                         </span>
                       )}
                       {activeMemory.weather && (
-                        <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[11px] font-bold flex items-center gap-1">
+                        <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/20 text-amber-300 text-[10px] font-bold flex items-center gap-1">
                           <CloudSun className="w-3 h-3" /> {activeMemory.weather}
                         </span>
                       )}
                       {activeMemory.music && (
-                        <span className="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-bold flex items-center gap-1">
+                        <span className="px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-400/20 text-indigo-300 text-[10px] font-bold flex items-center gap-1">
                           <Music className="w-3 h-3" /> {activeMemory.music}
                         </span>
                       )}
@@ -565,7 +581,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                     {activeMemory.tags?.length ? (
                       <div className="flex flex-wrap gap-1.5">
                         {activeMemory.tags.map((t) => (
-                          <span key={t} className="px-2.5 py-0.5 rounded-full bg-white/10 text-white/60 text-[10px] font-bold">
+                          <span key={t} className="px-2 py-0.5 rounded-full bg-white/10 text-white/50 text-[10px] font-bold">
                             #{t}
                           </span>
                         ))}
@@ -573,29 +589,29 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                     ) : null}
 
                     {/* Flower meaning */}
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 text-xs italic leading-relaxed font-serif">
+                    <div className="p-3 rounded-2xl bg-white/5 border border-white/8 text-white/50 text-[11px] italic leading-relaxed">
                       "{FLOWERS[activeMemory.flowerId]?.meaning}"
                     </div>
                   </div>
 
                   {/* Nav bar */}
-                  <div className="flex items-center justify-between px-5 py-4 border-t border-white/10">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-white/8">
                     <button
                       onClick={goPrev}
                       disabled={activeIndex <= 0}
-                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-bold disabled:opacity-30 active:scale-95 transition-transform"
+                      className="flex items-center gap-1 px-3 py-2 rounded-full bg-white/10 border border-white/10 text-white text-[11px] font-bold disabled:opacity-25 active:scale-95 transition-transform"
                     >
-                      <ChevronLeft className="w-4 h-4" /> Prev
+                      <ChevronLeft className="w-3.5 h-3.5" /> Prev
                     </button>
-                    <span className="text-white/40 text-[10px] font-bold tracking-widest">
+                    <span className="text-white/35 text-[10px] font-bold tracking-widest">
                       {activeIndex + 1} / {filteredMemories.length}
                     </span>
                     <button
                       onClick={goNext}
                       disabled={activeIndex >= filteredMemories.length - 1}
-                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-bold disabled:opacity-30 active:scale-95 transition-transform"
+                      className="flex items-center gap-1 px-3 py-2 rounded-full bg-white/10 border border-white/10 text-white text-[11px] font-bold disabled:opacity-25 active:scale-95 transition-transform"
                     >
-                      Next <ChevronRight className="w-4 h-4" />
+                      Next <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </motion.div>

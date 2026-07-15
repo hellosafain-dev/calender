@@ -636,33 +636,35 @@ export default function CalendarPage({
       {/* Expandable Memory Card View (AnimatePresence) */}
       <AnimatePresence>
         {selectedMemory && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xl" onClick={() => setSelectedMemory(null)}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 40 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.6}
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ type: "spring", stiffness: 340, damping: 28 }}
+              onClick={e => e.stopPropagation()}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.25}
               onDragEnd={(_, info) => {
-                const swipeThreshold = 50; // trigger navigation if swiped at least 50px
-                if (info.offset.x < -swipeThreshold) {
-                  handleNextMemory();
-                } else if (info.offset.x > swipeThreshold) {
-                  handlePrevMemory();
-                }
+                if (info.offset.y > 80) setSelectedMemory(null);
               }}
-              className={`w-full max-w-2xl rounded-3xl overflow-hidden ${theme.card} ${theme.shadow} border my-4 sm:my-8 flex flex-col max-h-[92vh] sm:max-h-[85vh] cursor-grab active:cursor-grabbing select-none`}
+              className={`w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden ${theme.card} border border-white/10 shadow-2xl flex flex-col cursor-grab active:cursor-grabbing select-none`}
+              style={{ maxHeight: "92dvh" }}
             >
-              {/* Photo Carousell / Banner */}
+              {/* Drag indicator */}
+              <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
+                <div className="w-9 h-1 rounded-full bg-white/25" />
+              </div>
+
+              {/* Photo Section */}
               {selectedMemory.photos.length > 0 ? (
-                <div className="relative aspect-video w-full bg-black overflow-hidden group shrink-0">
+                <div className="relative w-full bg-black/40 shrink-0 overflow-hidden" style={{ maxHeight: "50dvh" }}>
                   <img
                     src={selectedMemory.photos[activePhotoIndex]}
                     alt={selectedMemory.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover transition-all duration-300"
+                    className="w-full h-auto max-h-[50dvh] object-contain mx-auto"
                   />
                   
                   {/* Photo Swipe Controllers */}
@@ -670,24 +672,25 @@ export default function CalendarPage({
                     <>
                       <button
                         onClick={() => setActivePhotoIndex(prev => prev > 0 ? prev - 1 : selectedMemory.photos.length - 1)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white backdrop-blur shadow text-gray-800 cursor-pointer transition-transform hover:scale-105"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-md text-white active:scale-90 transition-transform"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setActivePhotoIndex(prev => prev < selectedMemory.photos.length - 1 ? prev + 1 : 0)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white backdrop-blur shadow text-gray-800 cursor-pointer transition-transform hover:scale-105"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-md text-white active:scale-90 transition-transform"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
 
                       {/* Dots */}
-                      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
+                      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
                         {selectedMemory.photos.map((_, pIdx) => (
-                          <div 
+                          <button 
                             key={pIdx}
-                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                              activePhotoIndex === pIdx ? "bg-white w-3" : "bg-white/50"
+                            onClick={() => setActivePhotoIndex(pIdx)}
+                            className={`rounded-full transition-all duration-300 ${
+                              activePhotoIndex === pIdx ? "bg-white w-5 h-1.5" : "bg-white/40 w-1.5 h-1.5"
                             }`}
                           />
                         ))}
@@ -695,25 +698,25 @@ export default function CalendarPage({
                     </>
                   )}
 
-                  {/* Header overlay for close & fav */}
-                  <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-black/40 text-white backdrop-blur text-xs font-medium">
+                  {/* Header overlay: count + fav + close */}
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                    <span className="px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white text-[10px] font-bold tracking-wide">
                       {activePhotoIndex + 1} / {selectedMemory.photos.length}
                     </span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       <button
                         onClick={(e) => handleToggleFavorite(e, selectedMemory.id)}
-                        className={`p-2 rounded-full backdrop-blur cursor-pointer shadow transition-transform hover:scale-110 ${
+                        className={`p-2 rounded-full backdrop-blur-md cursor-pointer shadow transition-transform active:scale-90 ${
                           selectedMemory.isFavorite 
                             ? "bg-rose-500 text-white" 
-                            : "bg-white/80 hover:bg-white text-gray-800"
+                            : "bg-black/40 text-white/80"
                         }`}
                       >
                         <Heart className="w-4 h-4 fill-current" />
                       </button>
                       <button
                         onClick={() => setSelectedMemory(null)}
-                        className="p-2 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur shadow text-white cursor-pointer transition-transform hover:scale-110"
+                        className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white cursor-pointer active:scale-90 transition-transform"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -721,10 +724,10 @@ export default function CalendarPage({
                   </div>
                 </div>
               ) : (
-                <div className="p-4 flex items-center justify-between border-b shrink-0">
+                <div className="px-4 pt-4 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-pink-400" />
-                    <span className="font-bold text-gray-800 dark:text-gray-200">{selectedMemory.date}</span>
+                    <span className={`font-bold text-sm ${theme.textPrimary}`}>{selectedMemory.date}</span>
                   </div>
                   <button
                     onClick={() => setSelectedMemory(null)}
@@ -735,122 +738,115 @@ export default function CalendarPage({
                 </div>
               )}
 
-              {/* Memory Details */}
-              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Memory Details - Scrollable */}
+              <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
                 {/* Flower Badge & Date Row */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl">{FLOWERS[selectedMemory.flowerId]?.emoji}</span>
-                    <div>
-                      <h4 className={`text-base font-bold ${theme.textPrimary}`}>
-                        {FLOWERS[selectedMemory.flowerId]?.name} Flower
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-pink-50 dark:bg-pink-950/30 flex items-center justify-center text-xl shrink-0 border border-pink-100/20">
+                      {FLOWERS[selectedMemory.flowerId]?.emoji}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className={`text-sm font-bold ${theme.textPrimary} truncate`}>
+                        {FLOWERS[selectedMemory.flowerId]?.name}
                       </h4>
-                      <p className="text-[10px] text-pink-500 font-semibold uppercase tracking-wider">
-                        Emotion: {FLOWERS[selectedMemory.flowerId]?.emotion}
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-mono tracking-wider mt-0.5">
-                        Day Index: #{getDayIndex(selectedMemory.date)}
+                      <p className="text-[10px] text-pink-500 font-semibold">
+                        {FLOWERS[selectedMemory.flowerId]?.emotion}
                       </p>
                     </div>
                   </div>
-
-                  <div className="text-left sm:text-right">
-                    <div className={`text-xs font-semibold ${theme.textSecondary}`}>
+                  <div className="text-right shrink-0">
+                    <div className={`text-[11px] font-semibold ${theme.textSecondary}`}>
                       {new Date(selectedMemory.date).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
+                        weekday: "short",
+                        month: "short",
                         day: "numeric",
                       })}
                     </div>
                     {selectedMemory.mood && (
-                      <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-pink-50 text-[10px] font-semibold text-pink-500 capitalize">
-                        Mood: {selectedMemory.mood}
+                      <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full bg-pink-50 dark:bg-pink-950/20 text-[9px] font-semibold text-pink-500 capitalize">
+                        {selectedMemory.mood}
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Content text */}
-                <div className="space-y-2">
-                  <h3 className={`text-xl font-extrabold ${theme.textPrimary} tracking-tight font-sans`}>
+                <div className="space-y-1.5">
+                  <h3 className={`text-lg font-extrabold ${theme.textPrimary} tracking-tight font-sans leading-snug`}>
                     {selectedMemory.title}
                   </h3>
-                  <p className={`text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap`}>
+                  <p className={`text-[13px] leading-relaxed text-gray-600 dark:text-gray-300 whitespace-pre-wrap`}>
                     {selectedMemory.note}
                   </p>
                 </div>
 
-                {/* Metadata Row: Weather, Music, Tags */}
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-4 text-xs">
+                {/* Metadata Row */}
+                <div className="flex flex-wrap gap-2">
                   {selectedMemory.weather && (
-                    <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
-                      <CloudSun className="w-4 h-4 text-amber-500" />
-                      <span className="capitalize">Weather: {selectedMemory.weather}</span>
-                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/20 border border-amber-100/20 text-amber-600 dark:text-amber-300 text-[10px] font-bold">
+                      <CloudSun className="w-3 h-3" /> {selectedMemory.weather}
+                    </span>
                   )}
                   {selectedMemory.music && (
-                    <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
-                      <Music className="w-4 h-4 text-indigo-500" />
-                      <span>Soundtrack: {selectedMemory.music}</span>
-                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100/20 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold">
+                      <Music className="w-3 h-3" /> {selectedMemory.music}
+                    </span>
                   )}
                 </div>
 
                 {/* Tags */}
                 {selectedMemory.tags && selectedMemory.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {selectedMemory.tags.map((tag, tIdx) => (
-                      <div
-                        key={tIdx}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-50 text-[10px] font-bold text-pink-600"
-                      >
-                        <Tag className="w-3 h-3" />
-                        {tag}
-                      </div>
+                      <span key={tIdx} className="px-2.5 py-0.5 rounded-full bg-pink-50 dark:bg-pink-950/20 text-[10px] font-bold text-pink-500">
+                        #{tag}
+                      </span>
                     ))}
                   </div>
                 )}
 
-                {/* Flower sentiment meaning box */}
-                <div className="bg-[#FAF8F8] dark:bg-[#15121D] p-3.5 rounded-2xl border border-rose-50 border-dashed text-xs text-gray-500 italic mt-4">
-                  <strong>{FLOWERS[selectedMemory.flowerId]?.name} Sentiment:</strong> {FLOWERS[selectedMemory.flowerId]?.meaning}
+                {/* Flower sentiment */}
+                <div className={`p-3 rounded-2xl border border-dashed text-[11px] italic leading-relaxed ${theme.textSecondary}`}
+                  style={{ borderColor: "rgba(236,112,139,0.15)", background: "rgba(236,112,139,0.03)" }}
+                >
+                  <strong>{FLOWERS[selectedMemory.flowerId]?.name}:</strong> {FLOWERS[selectedMemory.flowerId]?.meaning}
                 </div>
 
-                {/* Admin/Viewer edit/navigation shortcut */}
+                {/* Admin edit */}
                 {session.role !== null && (
                   <button
                     onClick={() => {
                       onNavigateToSettingsWithDate(selectedMemory.date);
                       setSelectedMemory(null);
                     }}
-                    className={`w-full py-2.5 rounded-2xl text-xs font-bold text-white ${theme.accent} ${theme.accentHover} shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer mt-3`}
+                    className={`w-full py-2.5 rounded-2xl text-xs font-bold text-white ${theme.accent} ${theme.accentHover} shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer`}
                   >
                     <Plus className="w-4 h-4" />
-                    Edit / Manage This Memory
+                    Edit This Memory
                   </button>
                 )}
 
                 {/* Prev & Next Controllers */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100/10">
                   <button
                     onClick={handlePrevMemory}
                     disabled={!hasPrevMemory}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-[#EC708B] hover:underline disabled:opacity-30 disabled:no-underline cursor-pointer"
+                    className="flex items-center gap-1 text-[11px] font-bold text-[#EC708B] disabled:opacity-25 cursor-pointer active:scale-95 transition-transform"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous Memory
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Prev
                   </button>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium tracking-wider animate-pulse hidden xs:inline-block">
-                    ← Swipe to Navigate →
+                  <span className={`text-[9px] font-bold tracking-widest ${theme.textSecondary}`}>
+                    Swipe to navigate
                   </span>
                   <button
                     onClick={handleNextMemory}
                     disabled={!hasNextMemory}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-[#EC708B] hover:underline disabled:opacity-30 disabled:no-underline cursor-pointer"
+                    className="flex items-center gap-1 text-[11px] font-bold text-[#EC708B] disabled:opacity-25 cursor-pointer active:scale-95 transition-transform"
                   >
-                    Next Memory
-                    <ChevronRight className="w-4 h-4" />
+                    Next
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
