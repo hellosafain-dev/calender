@@ -116,19 +116,89 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 4. STORAGE BUCKETS & POLICIES
+-- 4. COMPANION TABLES (Habits, Goals, Planner, Journal, Notes)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS habits (
+  id              TEXT PRIMARY KEY,
+  title           TEXT NOT NULL,
+  flower_id       TEXT NOT NULL,
+  frequency       TEXT NOT NULL CHECK (frequency IN ('daily','weekly')),
+  completed_dates TEXT[] DEFAULT '{}',
+  streak          INTEGER DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS goals (
+  id           TEXT PRIMARY KEY,
+  title        TEXT NOT NULL,
+  description  TEXT,
+  deadline     DATE,
+  category     TEXT NOT NULL CHECK (category IN ('personal','learning','health','finance','travel','habit','career')),
+  progress     INTEGER DEFAULT 0,
+  is_completed BOOLEAN DEFAULT FALSE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS planner_tasks (
+  id           TEXT PRIMARY KEY,
+  title        TEXT NOT NULL,
+  period       TEXT NOT NULL CHECK (period IN ('morning','afternoon','evening')),
+  order_index  INTEGER NOT NULL,
+  is_completed BOOLEAN DEFAULT FALSE,
+  date         DATE NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS journal_entries (
+  id         TEXT PRIMARY KEY,
+  date       DATE NOT NULL,
+  prompt     TEXT,
+  content    TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+  id         TEXT PRIMARY KEY,
+  title      TEXT NOT NULL,
+  content    TEXT NOT NULL,
+  folder     TEXT DEFAULT 'Personal',
+  is_pinned  BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE habits DISABLE ROW LEVEL SECURITY;
+ALTER TABLE goals DISABLE ROW LEVEL SECURITY;
+ALTER TABLE planner_tasks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE journal_entries DISABLE ROW LEVEL SECURITY;
+ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS idx_planner_tasks_date ON planner_tasks(date);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(date);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 5. STORAGE BUCKETS & POLICIES
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Create the 'photos' bucket for memory images if it doesn't exist
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('photos', 'photos', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Allow public access to view photos
-CREATE POLICY "Public View Access" 
-ON storage.objects FOR SELECT 
-USING ( bucket_id = 'photos' );
+-- Make policies idempotent by checking if they exist first
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Public View Access' AND tablename = 'objects'
+  ) THEN
+    CREATE POLICY "Public View Access" ON storage.objects FOR SELECT USING ( bucket_id = 'photos' );
+  END IF;
 
--- Allow unrestricted uploads to the photos bucket (since auth is handled by our Vercel API layer)
-CREATE POLICY "Public Upload Access" 
-ON storage.objects FOR INSERT 
-WITH CHECK ( bucket_id = 'photos' );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'Public Upload Access' AND tablename = 'objects'
+  ) THEN
+    CREATE POLICY "Public Upload Access" ON storage.objects FOR INSERT WITH CHECK ( bucket_id = 'photos' );
+  END IF;
+END
+$$;

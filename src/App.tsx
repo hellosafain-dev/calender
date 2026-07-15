@@ -14,8 +14,12 @@ import CalendarPage from "./components/CalendarPage.js";
 import TimelinePage from "./components/TimelinePage.js";
 import ClockPage from "./components/ClockPage.js";
 import SettingsPage from "./components/SettingsPage.js";
+import { Dashboard } from "./components/Dashboard.js";
+import { PlannerHabitsPage } from "./components/PlannerHabitsPage.js";
+import { JournalNotesPage } from "./components/JournalNotesPage.js";
 import ErrorBoundary from "./components/ErrorBoundary.js";
 import { Flower, ShieldAlert } from "lucide-react";
+import { Analytics } from '@vercel/analytics/react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -345,6 +349,30 @@ export default function App() {
         <AnimatePresence mode="wait">
           {activeTab === 0 && (
             <motion.div
+              key="tab-dashboard"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Dashboard />
+            </motion.div>
+          )}
+
+          {activeTab === 1 && (
+            <motion.div
+              key="tab-planner"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <PlannerHabitsPage />
+            </motion.div>
+          )}
+
+          {activeTab === 2 && (
+            <motion.div
               key="tab-calendar"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -361,38 +389,19 @@ export default function App() {
             </motion.div>
           )}
 
-          {activeTab === 1 && (
-            <motion.div
-              key="tab-timeline"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.4 }}
-            >
-              <TimelinePage
-                memories={memories}
-                theme={currentTheme}
-              />
-            </motion.div>
-          )}
-
-          {activeTab === 2 && (
-            <motion.div
-              key="tab-clock"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.4 }}
-            >
-              <ClockPage
-                reminders={reminders}
-                onRefreshReminders={loadAllData}
-                theme={currentTheme}
-              />
-            </motion.div>
-          )}
-
           {activeTab === 3 && (
+            <motion.div
+              key="tab-journal"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <JournalNotesPage />
+            </motion.div>
+          )}
+
+          {activeTab === 4 && (
             <motion.div
               key="tab-settings"
               initial={{ opacity: 0, y: 15 }}
@@ -499,6 +508,7 @@ export default function App() {
       </AnimatePresence>
     </div>
       </ErrorBoundary>
+      <Analytics />
     </QueryClientProvider>
   );
 }

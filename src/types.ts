@@ -49,13 +49,68 @@ export interface UserSession {
   username: string | null;
 }
 
+export interface Habit {
+  id: string;
+  title: string;
+  flowerId: string;
+  frequency: 'daily' | 'weekly';
+  completedDates: string[]; // YYYY-MM-DD format
+  streak: number;
+  createdAt: string;
+}
+
+export interface Goal {
+  id: string;
+  title: string;
+  description: string;
+  deadline?: string; // YYYY-MM-DD
+  category: 'personal' | 'learning' | 'health' | 'finance' | 'travel' | 'habit' | 'career';
+  progress: number; // 0 to 100
+  isCompleted: boolean;
+  createdAt: string;
+}
+
+export interface PlannerTask {
+  id: string;
+  title: string;
+  period: 'morning' | 'afternoon' | 'evening';
+  orderIndex: number;
+  isCompleted: boolean;
+  date: string; // YYYY-MM-DD
+  createdAt: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  date: string; // YYYY-MM-DD
+  prompt?: string;
+  content: string; // Markdown supported
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  folder: string;
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DbSchema {
   memories: Memory[];
   reminders: Reminder[];
+  habits: Habit[];
+  goals: Goal[];
+  plannerTasks: PlannerTask[];
+  journalEntries: JournalEntry[];
+  notes: Note[];
   settings: {
     theme: ThemeType;
-    passwordHash: string; // For Admin
-    viewerPasswordHash: string; // For Viewer
+    passwordHash: string;
+    viewerPasswordHash: string;
     title: string;
   };
 }
