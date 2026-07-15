@@ -325,8 +325,8 @@ export default function App() {
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-1000"
           style={{ 
             backgroundImage: `url(${currentTheme.bgImage})`,
-            filter: 'blur(35px) brightness(0.7) saturate(1.1)',
-            transform: 'scale(1.12)' // zoom slightly to hide edge artifacts from blur
+            filter: 'blur(8px) brightness(0.85) saturate(1.2)',
+            transform: 'scale(1.05)' // slight zoom to hide edge artifacts from blur
           }} 
         />
       )}
