@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, Heart, CloudSun, Music, Tag, Calendar as CalendarIcon, MapPin, Sparkles, X, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, CloudSun, Music, Tag, Calendar as CalendarIcon, MapPin, Sparkles, X, Plus, Sprout, Lock, Flower2 } from "lucide-react";
 import { Memory, Reminder } from "../types.js";
 import { ThemeConfig, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
@@ -88,7 +88,7 @@ function BirthdaySurpriseCard({ theme }: { theme: ThemeConfig }) {
         </div>
         <div className="space-y-1">
           <h3 className="text-sm sm:text-base font-black tracking-tight text-white">
-            Happy Birthday, My Princess! 👑💖
+            Happy Birthday, My Princess!
           </h3>
           <p className="text-[10px] sm:text-[11px] text-[#C084FC] leading-relaxed">
             The lanterns are glowing, the stars are shining, and the entire garden is blooming just for you today. You make my world magical.
@@ -313,9 +313,9 @@ export default function CalendarPage({
       name = session.username ? session.username.split(" ")[0] : "love";
     }
 
-    if (hrs < 12) return `Good morning, ${name} 🌸`;
-    if (hrs < 17) return `Good afternoon, ${name} ✨`;
-    return `Good evening, ${name} 💕`;
+    if (hrs < 12) return `Good morning, ${name}`;
+    if (hrs < 17) return `Good afternoon, ${name}`;
+    return `Good evening, ${name}`;
   };
 
   // Check if date str has a memory
@@ -495,15 +495,15 @@ export default function CalendarPage({
                     {/* Flower Blooming Indicator */}
                     <div className="h-3 xs:h-5 flex items-center justify-center mt-0.5">
                       {flower ? (
-                        <motion.span
+                        <motion.div
                           initial={{ scale: 0, rotate: -45 }}
                           animate={{ scale: 1, rotate: 0 }}
                           transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                          className="text-[10px] xs:text-xs sm:text-sm select-none filter drop-shadow"
+                          className="select-none filter drop-shadow-sm"
                           title={`${flower.name} - ${flower.emotion}`}
                         >
-                          {flower.emoji}
-                        </motion.span>
+                          <Flower2 className={`w-3.5 h-3.5 ${flower.iconColor}`} />
+                        </motion.div>
                       ) : (
                         <div className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-700 opacity-0" />
                       )}
@@ -561,7 +561,7 @@ export default function CalendarPage({
                     "{poeticQuote.quote}"
                   </p>
                   <p className="text-[10px] uppercase tracking-widest text-[#EC708B] font-semibold">
-                    ✨ {poeticQuote.sentiment}
+                    <Sparkles className="w-3 h-3 inline-block mr-1" />{poeticQuote.sentiment}
                   </p>
                 </div>
               )}
@@ -596,8 +596,8 @@ export default function CalendarPage({
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 flex items-center gap-1 shadow">
-                      <span>{FLOWERS[todayMemory.flowerId]?.emoji}</span>
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 flex items-center gap-1.5 shadow">
+                      <Flower2 className={`w-3.5 h-3.5 ${FLOWERS[todayMemory.flowerId]?.iconColor}`} />
                       <span>{FLOWERS[todayMemory.flowerId]?.name}</span>
                     </div>
                   </div>
@@ -613,7 +613,7 @@ export default function CalendarPage({
               </div>
             ) : (
               <div className="text-center py-6 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl space-y-3">
-                <span className="text-2xl block">🌱</span>
+                <Sprout className="w-6 h-6 text-emerald-400 mx-auto" />
                 <p className={`text-xs ${theme.textSecondary} leading-relaxed`}>
                   No memory planted for today yet. Shall we make this day blossom?
                 </p>
@@ -743,8 +743,8 @@ export default function CalendarPage({
                 {/* Flower Badge & Date Row */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-pink-50 dark:bg-pink-950/30 flex items-center justify-center text-xl shrink-0 border border-pink-100/20">
-                      {FLOWERS[selectedMemory.flowerId]?.emoji}
+                    <div className="w-10 h-10 rounded-2xl bg-pink-50 dark:bg-pink-950/30 flex items-center justify-center shrink-0 border border-pink-100/20">
+                      <Flower2 className={`w-5 h-5 ${FLOWERS[selectedMemory.flowerId]?.iconColor}`} />
                     </div>
                     <div className="min-w-0">
                       <h4 className={`text-sm font-bold ${theme.textPrimary} truncate`}>
@@ -890,7 +890,7 @@ export default function CalendarPage({
               {/* Graphic & Content */}
               <div className="space-y-4">
                 <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-pink-50 dark:bg-pink-950/20 flex items-center justify-center text-2xl sm:text-3xl animate-bounce">
-                  {clickedEmptyDate.isWithinRange ? "🌱" : "🔒"}
+                  {clickedEmptyDate.isWithinRange ? <Sprout className="w-7 h-7 text-emerald-400" /> : <Lock className="w-7 h-7 text-gray-400" />}
                 </div>
                 
                 <div className="space-y-2">
@@ -923,7 +923,7 @@ export default function CalendarPage({
                     </button>
                   ) : (
                     <div className="p-3 bg-pink-50/50 dark:bg-pink-950/10 rounded-2xl border border-pink-100/10 text-xs text-pink-500 font-medium">
-                      ✨ Please enter a passcode in Settings to plant memory flowers and access this digital garden.
+                      Please enter a passcode in Settings to plant memory flowers and access this digital garden.
                     </div>
                   )
                 ) : null}

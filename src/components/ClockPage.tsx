@@ -18,7 +18,8 @@ import {
   Loader2, CheckCircle2, X, ChevronDown,
   AlarmClock, Edit3, Save, RefreshCw, Search,
   Heart, Check, Mail, BookOpen, Droplet,
-  ChevronLeft, ChevronRight, Pill, Activity, Compass, Moon, Sun, Award
+  ChevronLeft, ChevronRight, Pill, Activity, Compass, Moon, Sun, Award,
+  CalendarDays, Repeat, Clock
 } from "lucide-react";
 import { Reminder } from "../types.js";
 import { ThemeConfig } from "../lib/themes.js";
@@ -193,11 +194,11 @@ function parseReminderLocally(input: string): ParsedReminder {
   if (title.length > 60) title = title.slice(0,57) + "...";
 
   const suggestions: Record<string, string> = {
-    anniversary: "Celebrating love is one of the most beautiful things in life 💖",
-    birthday: "Making someone feel special on their birthday means everything 🎂",
-    prayer: "A moment for prayer brings peace and clarity to the soul 🙏",
-    medicine: "Staying on top of your health is the greatest form of self-love 💊",
-    custom: "Every reminder is a small act of love and care for yourself 🌸",
+    anniversary: "Celebrating love is one of the most beautiful things in life",
+    birthday: "Making someone feel special on their birthday means everything",
+    prayer: "A moment for prayer brings peace and clarity to the soul",
+    medicine: "Staying on top of your health is the greatest form of self-love",
+    custom: "Every reminder is a small act of love and care for yourself",
   };
   return { title, time, date, repeat, type, suggestion: suggestions[type] };
 }
@@ -640,11 +641,11 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                       </span>
                       {aiSuggestion.date && (
                         <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70">
-                          📅 {aiSuggestion.date}
+                          <CalendarDays className="w-3 h-3 inline" /> {aiSuggestion.date}
                         </span>
                       )}
                       <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70 capitalize">
-                        🔁 {REPEAT_LABELS[aiSuggestion.repeat]}
+                        <Repeat className="w-3 h-3 inline" /> {REPEAT_LABELS[aiSuggestion.repeat]}
                       </span>
                       <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold bg-gradient-to-r ${TYPE_META[aiSuggestion.type as Reminder["type"]]?.gradient} bg-opacity-20 text-white border-white/20`}>
                         {TYPE_META[aiSuggestion.type as Reminder["type"]]?.label}
@@ -656,7 +657,7 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                   </button>
                 </div>
                 <p className="text-[11px] italic text-violet-300 border-t border-violet-500/20 pt-2 leading-relaxed">
-                  ✨ {aiSuggestion.suggestion}
+                  {aiSuggestion.suggestion}
                 </p>
                 <button onClick={handleSaveAI} disabled={savingAI}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-black shadow-lg active:scale-98 transition-transform flex items-center justify-center gap-2 disabled:opacity-60">
@@ -810,11 +811,11 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                       </p>
                       <div className="flex items-center flex-wrap gap-1.5 mt-1">
                         <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : "text-gray-600"}`}>
-                          🕒 {r.time}
+                          <Clock className="w-3 h-3 inline" /> {r.time}
                         </span>
                         {r.date && (
                           <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : "text-gray-600"}`}>
-                            📅 {r.date}
+                            <CalendarDays className="w-3 h-3 inline" /> {r.date}
                           </span>
                         )}
                         {r.repeat !== "none" && (
@@ -823,7 +824,7 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
                               ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                               : "bg-gray-800/30 text-gray-600 border-gray-700/20"
                           }`}>
-                            🔁 {REPEAT_LABELS[r.repeat]}
+                            <Repeat className="w-3 h-3 inline" /> {REPEAT_LABELS[r.repeat]}
                           </span>
                         )}
                       </div>

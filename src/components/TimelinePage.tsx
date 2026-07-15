@@ -15,6 +15,8 @@ import {
   SlidersHorizontal,
   Search,
   RotateCcw,
+  Leaf,
+  Flower2,
 } from "lucide-react";
 import { Memory } from "../types.js";
 import { ThemeConfig, FLOWERS } from "../lib/themes.js";
@@ -146,7 +148,7 @@ function WatchIcon({ memory, index, onTap, theme }: WatchIconProps) {
               {day}
             </span>
             {flower && (
-              <span style={{ fontSize: "clamp(8px, 2.2vw, 12px)" }}>{flower.emoji}</span>
+              <Flower2 className={`w-3.5 h-3.5 ${flower.iconColor}`} />
             )}
           </div>
 
@@ -308,7 +310,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                 >
                   <option value="">All Flowers</option>
                   {Object.values(FLOWERS).map((f) => (
-                    <option key={f.id} value={f.id}>{f.emoji} {f.name}</option>
+                    <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
                 </select>
                 <select
@@ -317,16 +319,16 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                   className="px-3 py-2 rounded-full text-xs border border-white/15 bg-white/10 outline-none focus:border-pink-400 text-inherit"
                 >
                   <option value="">All Moods</option>
-                  <option value="grateful">Grateful 🙏</option>
-                  <option value="joyful">Joyful 🎉</option>
-                  <option value="reflective">Reflective 💭</option>
-                  <option value="serene">Serene 🌊</option>
-                  <option value="romantic">Romantic 💖</option>
-                  <option value="peaceful">Peaceful 🕊️</option>
+                  <option value="grateful">Grateful</option>
+                  <option value="joyful">Joyful</option>
+                  <option value="reflective">Reflective</option>
+                  <option value="serene">Serene</option>
+                  <option value="romantic">Romantic</option>
+                  <option value="peaceful">Peaceful</option>
                 </select>
               </div>
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-semibold ${theme.textPrimary}`}>Favorites only 💖</span>
+                <span className={`text-xs font-semibold ${theme.textPrimary}`}>Favorites only</span>
                 <button
                   onClick={() => setShowFavoritesOnly((v) => !v)}
                   className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-300 ${showFavoritesOnly ? "bg-pink-500" : "bg-gray-300/40"}`}
@@ -354,7 +356,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-xs mx-auto mt-16 text-center py-12 px-6 rounded-[32px] bg-white/10 backdrop-blur-md border border-white/15 space-y-4"
         >
-          <div className="text-5xl">🌿</div>
+          <div className="flex items-center justify-center"><Leaf className="w-12 h-12 text-green-400/80" /></div>
           <h3 className={`text-base font-bold ${theme.textPrimary}`}>
             {hasActiveFilters ? "No matches" : "Garden is waiting"}
           </h3>
@@ -543,8 +545,8 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                   <div className="p-4 sm:p-5 space-y-4">
                     {/* Flower accent */}
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-xl shrink-0">
-                        {FLOWERS[activeMemory.flowerId]?.emoji}
+                      <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
+                        <Flower2 className={`w-5 h-5 ${FLOWERS[activeMemory.flowerId]?.iconColor}`} />
                       </div>
                       <div className="min-w-0">
                         <p className="text-white font-extrabold text-[15px] truncate">{activeMemory.title}</p>

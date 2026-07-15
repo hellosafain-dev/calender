@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode,
   Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X, Download,
-  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2
+  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2, Pencil, Flower2, Tag
 } from "lucide-react";
 import { Memory, ThemeType } from "../types.js";
 import { ThemeConfig, THEMES, FLOWERS } from "../lib/themes.js";
@@ -433,8 +433,8 @@ export default function SettingsPage({
             />
 
             {authError && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[11px] font-bold text-red-400">
-                ⚠️ {authError}
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[11px] font-bold text-red-400 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> {authError}
               </motion.p>
             )}
 
@@ -465,8 +465,8 @@ export default function SettingsPage({
       {/* Upper Status row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-white/5 p-4 rounded-3xl border border-white/10 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pink-500/20 to-violet-500/20 flex items-center justify-center text-xl border border-white/10 shrink-0">
-            {session.role === "admin" ? "✍️" : "🌸"}
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pink-500/20 to-violet-500/20 flex items-center justify-center border border-white/10 shrink-0">
+            {session.role === "admin" ? <Pencil className="w-5 h-5 text-pink-400" /> : <Flower2 className="w-5 h-5 text-pink-400" />}
           </div>
           <div>
             <h3 className={`text-sm font-black ${theme.textPrimary}`}>
@@ -645,7 +645,7 @@ export default function SettingsPage({
                   >
                     {Object.entries(FLOWERS).map(([fId, fObj]) => (
                       <option key={fId} value={fId} className="bg-neutral-900 text-white">
-                        {fObj.emoji} {fObj.name} ({fObj.emotion})
+                        {fObj.name} ({fObj.emotion})
                       </option>
                     ))}
                   </select>
@@ -658,12 +658,12 @@ export default function SettingsPage({
                     onChange={(e) => setFormMood(e.target.value)}
                     className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
                   >
-                    <option value="peaceful" className="bg-neutral-900 text-white">Peaceful 🌸</option>
-                    <option value="joyful" className="bg-neutral-900 text-white">Joyful 🌻</option>
-                    <option value="nostalgic" className="bg-neutral-900 text-white">Nostalgic 🕰️</option>
-                    <option value="romantic" className="bg-neutral-900 text-white">Romantic 💖</option>
-                    <option value="grateful" className="bg-neutral-900 text-white">Grateful 🙏</option>
-                    <option value="calm" className="bg-neutral-900 text-white">Calm 🤍</option>
+                    <option value="peaceful" className="bg-neutral-900 text-white">Peaceful</option>
+                    <option value="joyful" className="bg-neutral-900 text-white">Joyful</option>
+                    <option value="nostalgic" className="bg-neutral-900 text-white">Nostalgic</option>
+                    <option value="romantic" className="bg-neutral-900 text-white">Romantic</option>
+                    <option value="grateful" className="bg-neutral-900 text-white">Grateful</option>
+                    <option value="calm" className="bg-neutral-900 text-white">Calm</option>
                   </select>
                 </div>
 
@@ -674,11 +674,11 @@ export default function SettingsPage({
                     onChange={(e) => setFormWeather(e.target.value)}
                     className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
                   >
-                    <option value="sunny" className="bg-neutral-900 text-white">Sunny ☀️</option>
-                    <option value="rainy" className="bg-neutral-900 text-white">Rainy 🌧️</option>
-                    <option value="cloudy" className="bg-neutral-900 text-white">Cloudy ☁️</option>
-                    <option value="snowy" className="bg-neutral-900 text-white">Snowy ❄️</option>
-                    <option value="windy" className="bg-neutral-900 text-white">Windy 💨</option>
+                    <option value="sunny" className="bg-neutral-900 text-white">Sunny</option>
+                    <option value="rainy" className="bg-neutral-900 text-white">Rainy</option>
+                    <option value="cloudy" className="bg-neutral-900 text-white">Cloudy</option>
+                    <option value="snowy" className="bg-neutral-900 text-white">Snowy</option>
+                    <option value="windy" className="bg-neutral-900 text-white">Windy</option>
                   </select>
                 </div>
 
@@ -868,7 +868,7 @@ export default function SettingsPage({
                           />
                         ) : (
                           <div className={`w-6 h-6 rounded-lg ${tObj.accentLight} border ${tObj.border} flex items-center justify-center text-xs shrink-0 shadow-sm`}>
-                            🌸
+                            <Flower2 className="w-3 h-3 text-pink-400" />
                           </div>
                         )}
                       </div>
@@ -905,8 +905,8 @@ export default function SettingsPage({
                     className={`flex items-center justify-between p-3 rounded-2xl border ${theme.border} bg-white/5 transition-all hover:bg-white/10`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className={`text-2xl w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0`}>
-                        {flower?.emoji}
+                      <span className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0`}>
+                        {flower && <Flower2 className={`w-5 h-5 ${flower.iconColor}`} />}
                       </span>
                       <div className="min-w-0">
                         <h4 className={`text-xs font-black ${theme.textPrimary} flex items-center gap-2 truncate`}>
@@ -917,8 +917,8 @@ export default function SettingsPage({
                             </span>
                           )}
                         </h4>
-                        <p className={`text-[10px] ${theme.textSecondary} font-semibold mt-1`}>
-                          📅 {m.date} | 🏷️ {flower?.name} | {m.photos.length} Photos
+                        <p className={`text-[10px] ${theme.textSecondary} font-semibold mt-1 flex items-center gap-1`}>
+                          <Calendar className="w-3 h-3 inline" /> {m.date} | <Tag className="w-3 h-3 inline" /> {flower?.name} | {m.photos.length} Photos
                         </p>
                       </div>
                     </div>
@@ -1088,7 +1088,7 @@ export default function SettingsPage({
                 ? "bg-red-500/10 text-red-400 border-red-500/25 backdrop-blur-md" 
                 : "bg-emerald-500/10 text-emerald-400 border-emerald-500/25 backdrop-blur-md"
             }`}>
-              <span>{toastMessage.isError ? "⚠️" : "✨"}</span>
+              <span>{toastMessage.isError ? <AlertTriangle className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}</span>
               <span>{toastMessage.text}</span>
             </div>
           </motion.div>

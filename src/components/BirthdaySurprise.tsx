@@ -58,7 +58,7 @@ export default function BirthdaySurprise({ onClose }: BirthdaySurpriseProps) {
             Happy Birthday, my butterfly, my beautiful flower, my sweetheart, my love, my sunshine, my rainbow, my absolute everything.
 
             Forever Yours,
-            ❤️
+            <Heart className="w-5 h-5 text-red-500 fill-current inline-block" />
           </div>
 
           <hr className="border-t border-dashed border-amber-900/10" />

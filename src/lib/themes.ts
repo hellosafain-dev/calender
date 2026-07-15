@@ -360,6 +360,7 @@ export interface FlowerSystemConfig {
   symbol: string;
   meaning: string;
   gradient: string;
+  iconColor: string;
 }
 
 export const FLOWERS: Record<string, FlowerSystemConfig> = {
@@ -371,7 +372,8 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🌹",
     symbol: "🌹",
     meaning: "The classic symbol of deep affection, longing, and unforgettable devotion.",
-    gradient: "from-red-500 to-rose-600"
+    gradient: "from-red-500 to-rose-600",
+    iconColor: "text-rose-500"
   },
   tulip: {
     id: "tulip",
@@ -381,17 +383,19 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🌷",
     symbol: "🌷",
     meaning: "Stands for a beautiful tomorrow, optimism, warmth, and fresh possibilities.",
-    gradient: "from-amber-400 to-pink-500"
+    gradient: "from-amber-400 to-pink-500",
+    iconColor: "text-orange-400"
   },
   lavender: {
     id: "lavender",
     name: "Lavender",
     emotion: "Peace & Serenity",
     color: "text-violet-500 bg-violet-100",
-    emoji: "🌸", // We can use purple colored emojis
+    emoji: "🌸", 
     symbol: "🌸",
     meaning: "Brings calming thoughts, tranquility, safety, and a quiet sense of comfort.",
-    gradient: "from-violet-400 to-purple-500"
+    gradient: "from-violet-400 to-purple-500",
+    iconColor: "text-purple-400"
   },
   sunflower: {
     id: "sunflower",
@@ -401,7 +405,8 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🌻",
     symbol: "🌻",
     meaning: "Glows with radiating happiness, warmth, positive energy, and laughter.",
-    gradient: "from-yellow-400 to-amber-500"
+    gradient: "from-yellow-400 to-amber-500",
+    iconColor: "text-amber-400"
   },
   cherry_blossom: {
     id: "cherry_blossom",
@@ -411,7 +416,8 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🌸",
     symbol: "🌸",
     meaning: "Expresses fresh starts, the precious fleeting beauty of life, and sweet promises.",
-    gradient: "from-pink-400 to-rose-500"
+    gradient: "from-pink-400 to-rose-500",
+    iconColor: "text-pink-400"
   },
   jasmine: {
     id: "jasmine",
@@ -421,7 +427,8 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🤍",
     symbol: "🤍",
     meaning: "Represents pure grace, sweet innocence, elegance, and silent deep love.",
-    gradient: "from-slate-200 to-[#FAF7F2]"
+    gradient: "from-slate-200 to-[#FAF7F2]",
+    iconColor: "text-slate-350"
   },
   hydrangea: {
     id: "hydrangea",
@@ -431,7 +438,8 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🌼",
     symbol: "🌼",
     meaning: "Shows sincere appreciation, deep understanding, care, and family bonds.",
-    gradient: "from-teal-400 to-blue-500"
+    gradient: "from-teal-400 to-blue-500",
+    iconColor: "text-sky-400"
   },
   peony: {
     id: "peony",
@@ -441,6 +449,7 @@ export const FLOWERS: Record<string, FlowerSystemConfig> = {
     emoji: "🌺",
     symbol: "🌺",
     meaning: "Symbolizes prosperity, cozy comfort, honor, and gentle protective warmth.",
-    gradient: "from-rose-300 to-pink-500"
+    gradient: "from-rose-300 to-pink-500",
+    iconColor: "text-rose-400"
   }
 };

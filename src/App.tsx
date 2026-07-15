@@ -128,8 +128,8 @@ function playBirthdayChime() {
 function sendBirthdayNotification() {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
-    const n = new Notification("✨ A Magical Surprise Awaits...", {
-      body: "Happy Birthday, My Sweetheart! Open the app to see your surprise. 👑💖",
+    const n = new Notification("A Magical Surprise Awaits...", {
+      body: "Happy Birthday, My Sweetheart! Open the app to see your surprise.",
       icon: "/icons/icon-192.png",
       tag: "birthday-surprise",
       requireInteraction: true
