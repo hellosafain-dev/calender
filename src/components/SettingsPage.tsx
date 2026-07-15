@@ -3,9 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion } from "motion/react";
-import { Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode, Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X, Download } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode,
+  Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X, Download,
+  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2
+} from "lucide-react";
 import { Memory, ThemeType } from "../types.js";
 import { ThemeConfig, THEMES, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
@@ -47,7 +51,6 @@ export default function SettingsPage({
   // PWA Install State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
 
   useEffect(() => {
     const ua = window.navigator.userAgent;
@@ -81,6 +84,7 @@ export default function SettingsPage({
       alert("App is either already installed, or your browser doesn't support automatic installation. Try 'Add to Home Screen' in your browser menu!");
     }
   };
+
   // Settings Sub-Tabs: "dashboard", "themes", "memories", "security"
   const [activeSubTab, setActiveSubTab] = useState<"dashboard" | "themes" | "memories" | "security">("dashboard");
 
@@ -116,6 +120,22 @@ export default function SettingsPage({
       return () => clearTimeout(timer);
     }
   }, [toastMessage]);
+
+  // Pre-fill memory for editing
+  const startEditMemory = (memory: Memory) => {
+    setEditingMemory(memory);
+    setFormDate(memory.date);
+    setFormTitle(memory.title);
+    setFormNote(memory.note);
+    setFormFlower(memory.flowerId);
+    setFormMood(memory.mood || "peaceful");
+    setFormWeather(memory.weather || "sunny");
+    setFormMusic(memory.music || "");
+    setFormTags(memory.tags.join(", "));
+    setFormPhotos(memory.photos);
+    setFormDraft(!!memory.isDraft);
+    setActiveSubTab("dashboard");
+  };
 
   useEffect(() => {
     if (preSelectedDate) {
@@ -272,26 +292,10 @@ export default function SettingsPage({
     }
   };
 
-  // Pre-fill memory for editing
-  const startEditMemory = (memory: Memory) => {
-    setEditingMemory(memory);
-    setFormDate(memory.date);
-    setFormTitle(memory.title);
-    setFormNote(memory.note);
-    setFormFlower(memory.flowerId);
-    setFormMood(memory.mood || "peaceful");
-    setFormWeather(memory.weather || "sunny");
-    setFormMusic(memory.music || "");
-    setFormTags(memory.tags.join(", "));
-    setFormPhotos(memory.photos);
-    setFormDraft(!!memory.isDraft);
-    setActiveSubTab("dashboard");
-  };
-
   // Duplicate Memory
   const handleDuplicateMemory = async (memory: Memory) => {
     try {
-      const duplicateDate = `${memory.date}-dup`; // Let user change the date later
+      const duplicateDate = `${memory.date}-dup`;
       await API.createMemory({
         date: duplicateDate,
         title: `${memory.title} (Copy)`,
@@ -302,9 +306,10 @@ export default function SettingsPage({
         music: memory.music,
         tags: [...memory.tags, "duplicate"],
         photos: memory.photos,
-        isDraft: true // Default to draft to prevent double timelines
+        isDraft: true
       });
       onRefreshMemories();
+      setToastMessage({ text: "Memory successfully duplicated!" });
     } catch (err) {
       console.error(err);
     }
@@ -394,52 +399,53 @@ export default function SettingsPage({
   // Gated Entrance Lockscreen UI
   if (!session.role) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 pt-16 pb-32">
+      <div className="w-full max-w-md mx-auto px-4 pt-20 pb-32">
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`rounded-3xl p-6 ${theme.card} ${theme.shadow} border text-center space-y-6`}
+          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 320, damping: 25 }}
+          className={`rounded-3xl p-8 ${theme.card} ${theme.shadow} border ${theme.border} backdrop-blur-xl text-center space-y-6 relative overflow-hidden`}
         >
-          <div className={`mx-auto w-16 h-16 rounded-full ${theme.accentLight} flex items-center justify-center border ${theme.border} shadow-inner`}>
-            <Lock className={`w-6 h-6 ${theme.accentText}`} />
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-violet-500/5 pointer-events-none" />
+          
+          <div className={`mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-400 to-violet-500 flex items-center justify-center shadow-lg relative z-10`}>
+            <Lock className="w-6 h-6 text-white" />
           </div>
 
-          <div className="space-y-1">
-            <h2 className={`text-2xl font-bold font-sans ${theme.textPrimary}`}>
+          <div className="space-y-2 relative z-10">
+            <h2 className={`text-2xl font-black tracking-tight ${theme.textPrimary}`}>
               Private Sanctuary
             </h2>
-            <p className={`text-xs ${theme.textSecondary} px-4 leading-relaxed`}>
-              Bloom Diary is completely private. Please enter your passcode to access this digital garden.
+            <p className={`text-xs ${theme.textSecondary} px-2 leading-relaxed`}>
+              Bloom Diary is protected with end-to-end security. Please enter your passcode to access this digital garden.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="relative">
-              <input
-                type="password"
-                required
-                placeholder="Passcode"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className={`w-full px-4 py-3 rounded-2xl border ${theme.border} ${theme.card} text-center text-sm tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-transparent placeholder-neutral-400 dark:placeholder-neutral-600 ${theme.textPrimary}`}
-              />
-            </div>
+          <form onSubmit={handleLogin} className="space-y-4 relative z-10">
+            <input
+              type="password"
+              required
+              autoFocus
+              placeholder="••••••••"
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              className={`w-full px-4 py-3.5 rounded-2xl border ${theme.border} bg-white/5 text-center text-lg tracking-widest font-black focus:outline-none focus:border-pink-500 transition-colors placeholder-neutral-500 ${theme.textPrimary}`}
+            />
 
             {authError && (
-              <p className="text-[11px] font-semibold text-red-500 animate-pulse">
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[11px] font-bold text-red-400">
                 ⚠️ {authError}
-              </p>
+              </motion.p>
             )}
 
             <button
               id="login-btn"
               type="submit"
               disabled={authLoading}
-              className={`w-full py-3 rounded-2xl text-white font-bold text-sm ${theme.accent} ${theme.accentHover} shadow-sm transition-transform active:scale-98 cursor-pointer flex items-center justify-center gap-1.5`}
+              className={`w-full py-3.5 rounded-2xl text-white font-black text-xs uppercase tracking-wider bg-gradient-to-r from-pink-500 to-violet-600 hover:from-pink-600 hover:to-violet-700 shadow-lg active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2`}
             >
               {authLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
@@ -455,30 +461,31 @@ export default function SettingsPage({
 
   // Logged-in view
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 pt-4 pb-32">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 pt-4 pb-28">
       {/* Upper Status row */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 bg-white/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-white/5 p-4 rounded-3xl border border-white/10 shadow-sm backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pink-500/20 to-violet-500/20 flex items-center justify-center text-xl border border-white/10 shrink-0">
             {session.role === "admin" ? "✍️" : "🌸"}
           </div>
           <div>
-            <h3 className={`text-sm font-bold ${theme.textPrimary}`}>
+            <h3 className={`text-sm font-black ${theme.textPrimary}`}>
               {session.username}
             </h3>
-            <p className="text-[10px] text-green-500 font-semibold uppercase tracking-wider">
-              Connected as {session.role === "admin" ? "Administrator" : "Viewer"}
+            <p className="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              {session.role === "admin" ? "Administrator" : "Viewer"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           {(!isIOS || deferredPrompt) && (
             <button
               onClick={handleInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold cursor-pointer transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-black transition-all active:scale-95 text-pink-400"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
               Install App
             </button>
           )}
@@ -486,24 +493,24 @@ export default function SettingsPage({
           <button
             id="logout-btn"
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold cursor-pointer transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-500/25 bg-red-500/10 hover:bg-red-500/15 text-red-400 text-xs font-black transition-all active:scale-95"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
             Logout
           </button>
         </div>
       </div>
 
       {/* Settings Navigation Sub-Tabs */}
-      <div className="flex gap-2 border-b border-gray-100 dark:border-gray-800 pb-3 mb-6 overflow-x-auto select-none">
+      <div className="flex gap-1.5 border-b border-white/15 pb-3 mb-6 overflow-x-auto select-none scrollbar-none">
         {session.role !== null && (
           <button
             id="subtab-dashboard"
             onClick={() => setActiveSubTab("dashboard")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+            className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
               activeSubTab === "dashboard"
-                ? `${theme.accent} text-white shadow-sm`
-                : `${theme.textSecondary} hover:${theme.textPrimary}`
+                ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
+                : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -514,10 +521,10 @@ export default function SettingsPage({
         <button
           id="subtab-themes"
           onClick={() => setActiveSubTab("themes")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+          className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
             activeSubTab === "themes"
-              ? `${theme.accent} text-white shadow-sm`
-              : `${theme.textSecondary} hover:${theme.textPrimary}`
+              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
+              : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
           }`}
         >
           <Palette className="w-3.5 h-3.5" />
@@ -528,24 +535,24 @@ export default function SettingsPage({
           <button
             id="subtab-memories"
             onClick={() => setActiveSubTab("memories")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+            className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
               activeSubTab === "memories"
-                ? `${theme.accent} text-white shadow-sm`
-                : `${theme.textSecondary} hover:${theme.textPrimary}`
+                ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
+                : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            Media & Memories
+            Media Inventory
           </button>
         )}
 
         <button
           id="subtab-security"
           onClick={() => setActiveSubTab("security")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+          className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
             activeSubTab === "security"
-              ? `${theme.accent} text-white shadow-sm`
-              : `${theme.textSecondary} hover:${theme.textPrimary}`
+              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
+              : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
           }`}
         >
           <UserCheck className="w-3.5 h-3.5" />
@@ -560,10 +567,11 @@ export default function SettingsPage({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-3xl p-6 ${theme.card} ${theme.shadow} border`}
+            className={`rounded-3xl p-4 sm:p-6 ${theme.card} ${theme.shadow} border ${theme.border} space-y-6`}
           >
-            <div className="flex justify-between items-center mb-6 pb-4 border-b border-neutral-100 dark:border-neutral-800">
-              <h3 className={`text-xl font-bold font-sans ${theme.textPrimary}`}>
+            <div className="flex justify-between items-center pb-4 border-b border-white/10 gap-3">
+              <h3 className={`text-base font-black ${theme.textPrimary} flex items-center gap-2`}>
+                <Sparkles className="w-4 h-4 text-pink-400" />
                 {editingMemory ? "Edit Memory Blossom" : "Plant a New Memory Flower"}
               </h3>
               {editingMemory && (
@@ -571,6 +579,7 @@ export default function SettingsPage({
                   id="cancel-edit-btn"
                   onClick={() => {
                     setEditingMemory(null);
+                    setFormDate(new Date().toISOString().split("T")[0]);
                     setFormTitle("");
                     setFormNote("");
                     setFormFlower("rose");
@@ -580,62 +589,62 @@ export default function SettingsPage({
                     setFormTags("");
                     setFormPhotos([]);
                   }}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold ${theme.textSecondary} bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer`}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black ${theme.textSecondary} bg-white/5 border ${theme.border} hover:bg-white/10 transition-colors cursor-pointer`}
                 >
                   Cancel Edit
                 </button>
               )}
             </div>
 
-            <form onSubmit={handleSaveMemory} className="space-y-6">
+            <form onSubmit={handleSaveMemory} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Date</label>
+                  <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Date</label>
                   <input
                     type="date"
                     required
                     value={formDate}
                     onChange={(e) => setFormDate(e.target.value)}
-                    className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} focus:ring-2 focus:ring-pink-500/20 outline-none transition-all`}
+                    className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors ${theme.textPrimary}`}
                   />
                 </div>
                 <div>
-                  <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Memory Title</label>
+                  <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Memory Title</label>
                   <input
                     type="text"
                     required
-                    placeholder="Short title capturing the moment..."
+                    placeholder="Capture the heart of this moment..."
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} focus:ring-2 focus:ring-pink-500/20 outline-none transition-all`}
+                    className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors placeholder-gray-500 ${theme.textPrimary}`}
                   />
                 </div>
               </div>
 
-              {/* Note / Markdown Editor */}
+              {/* Note Editor */}
               <div>
-                <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Sweet Note</label>
+                <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Sweet Note</label>
                 <textarea
                   required
-                  rows={5}
-                  placeholder="Tell our story here..."
+                  rows={6}
+                  placeholder="Pour your feelings and stories here. Tell me everything..."
                   value={formNote}
                   onChange={(e) => setFormNote(e.target.value)}
-                  className={`w-full px-4 py-3 text-xs rounded-xl border ${theme.border} ${theme.card} focus:ring-2 focus:ring-pink-500/20 outline-none transition-all leading-relaxed font-sans`}
+                  className={`w-full px-4 py-3 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors leading-relaxed font-sans placeholder-gray-500 ${theme.textPrimary}`}
                 />
               </div>
 
-              {/* Attributes: Flower selection, Mood, Weather */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Attributes Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Select Flower</label>
+                  <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Select Flower</label>
                   <select
                     value={formFlower}
                     onChange={(e) => setFormFlower(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
                   >
                     {Object.entries(FLOWERS).map(([fId, fObj]) => (
-                      <option key={fId} value={fId}>
+                      <option key={fId} value={fId} className="bg-neutral-900 text-white">
                         {fObj.emoji} {fObj.name} ({fObj.emotion})
                       </option>
                     ))}
@@ -643,73 +652,74 @@ export default function SettingsPage({
                 </div>
 
                 <div>
-                  <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Mood</label>
+                  <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Mood</label>
                   <select
                     value={formMood}
                     onChange={(e) => setFormMood(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
                   >
-                    <option value="peaceful">Peaceful 🌸</option>
-                    <option value="joyful">Joyful 🌻</option>
-                    <option value="nostalgic">Nostalgic 🕰️</option>
-                    <option value="romantic">Romantic 💖</option>
-                    <option value="grateful">Grateful 🙏</option>
-                    <option value="calm">Calm 🤍</option>
+                    <option value="peaceful" className="bg-neutral-900 text-white">Peaceful 🌸</option>
+                    <option value="joyful" className="bg-neutral-900 text-white">Joyful 🌻</option>
+                    <option value="nostalgic" className="bg-neutral-900 text-white">Nostalgic 🕰️</option>
+                    <option value="romantic" className="bg-neutral-900 text-white">Romantic 💖</option>
+                    <option value="grateful" className="bg-neutral-900 text-white">Grateful 🙏</option>
+                    <option value="calm" className="bg-neutral-900 text-white">Calm 🤍</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Weather</label>
+                  <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Weather</label>
                   <select
                     value={formWeather}
                     onChange={(e) => setFormWeather(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
                   >
-                    <option value="sunny">Sunny ☀️</option>
-                    <option value="rainy">Rainy 🌧️</option>
-                    <option value="cloudy">Cloudy ☁️</option>
-                    <option value="snowy">Snowy ❄️</option>
-                    <option value="windy">Windy 💨</option>
+                    <option value="sunny" className="bg-neutral-900 text-white">Sunny ☀️</option>
+                    <option value="rainy" className="bg-neutral-900 text-white">Rainy 🌧️</option>
+                    <option value="cloudy" className="bg-neutral-900 text-white">Cloudy ☁️</option>
+                    <option value="snowy" className="bg-neutral-900 text-white">Snowy ❄️</option>
+                    <option value="windy" className="bg-neutral-900 text-white">Windy 💨</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Soundtrack</label>
+                  <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Soundtrack</label>
                   <input
                     type="text"
-                    placeholder="e.g. Lofi Café"
+                    placeholder="e.g. Sunset Lover"
                     value={formMusic}
                     onChange={(e) => setFormMusic(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors placeholder-gray-500 ${theme.textPrimary}`}
                   />
                 </div>
               </div>
 
-              {/* Tags, separated by comma */}
+              {/* Tags */}
               <div>
-                <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Tags (comma-separated)</label>
+                <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>Tags (comma-separated)</label>
                 <input
                   type="text"
-                  placeholder="e.g. surprise, anniversary, twilight"
+                  placeholder="e.g. date-night, warm-cocoa, beach"
                   value={formTags}
                   onChange={(e) => setFormTags(e.target.value)}
-                  className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none`}
+                  className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors placeholder-gray-500 ${theme.textPrimary}`}
                 />
               </div>
 
-              {/* Photo Upload: Drag & Drop + File selection */}
-              <div>
-                <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>Upload Photos</label>
+              {/* Premium Drag & Drop Uploader */}
+              <div className="space-y-3">
+                <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-0.5`}>Photos</label>
+                
                 <div
                   onDragEnter={handleDrag}
                   onDragOver={handleDrag}
                   onDragLeave={handleDrag}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 ${
                     dragActive 
-                      ? "border-pink-500 bg-pink-50/50 dark:bg-pink-900/10" 
-                      : `${theme.border} hover:border-pink-300 ${theme.card}`
+                      ? "border-pink-500 bg-pink-500/10" 
+                      : `border-white/10 hover:border-pink-500/60 bg-white/5`
                   }`}
                 >
                   <input
@@ -720,51 +730,55 @@ export default function SettingsPage({
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <Upload className={`w-8 h-8 ${theme.textSecondary} mx-auto mb-3`} />
-                  <p className={`text-xs ${theme.textSecondary}`}>
-                    Drag and drop your photos here, or <span className={`${theme.accentText} font-bold`}>browse</span>
+                  <div className="mx-auto w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
+                    <Upload className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <p className={`text-xs font-bold ${theme.textPrimary}`}>
+                    Drag and drop photos here, or <span className="text-pink-400">browse</span>
                   </p>
-                  <p className="text-[10px] opacity-60 mt-1">Supports PNG, JPEG up to 10MB</p>
+                  <p className="text-[9px] text-gray-500 mt-1 uppercase tracking-wider font-semibold">Max 10MB per image</p>
                 </div>
 
-                {/* Previews */}
-                {formPhotos.length > 0 && (
-                  <div className="flex flex-wrap gap-3 mt-4">
-                    {formPhotos.map((p, idx) => (
-                      <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden shadow border border-neutral-200 dark:border-neutral-700 group">
-                        <img src={p} alt="upload preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(idx)}
-                          className="absolute -top-1 -right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Previews Grid */}
+                <AnimatePresence>
+                  {formPhotos.length > 0 && (
+                    <motion.div initial={{ opacity:0, y:5 }} animate={{ opacity:1, y:0 }} className="flex flex-wrap gap-2.5 pt-2">
+                      {formPhotos.map((p, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden shadow-md border border-white/10 group">
+                          <img src={p} alt="upload preview" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(idx)}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-between border-t pt-4">
+              {/* Submit panel */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/10 pt-4">
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="checkbox-draft"
                     checked={formDraft}
                     onChange={(e) => setFormDraft(e.target.checked)}
-                    className="rounded border-gray-300 text-pink-500 focus:ring-pink-300"
+                    className="w-4.5 h-4.5 rounded-lg border-white/20 text-pink-500 bg-white/5 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                   />
-                  <label htmlFor="checkbox-draft" className="text-xs font-semibold text-gray-600 cursor-pointer">
-                    Save as Draft (Private, not on Calendar)
+                  <label htmlFor="checkbox-draft" className={`text-xs font-semibold ${theme.textSecondary} cursor-pointer select-none`}>
+                    Save as Draft (Private, doesn't bloom on Calendar)
                   </label>
                 </div>
 
                 <button
                   id="submit-memory-btn"
                   type="submit"
-                  className={`px-6 py-2.5 rounded-xl text-white font-bold text-xs ${theme.accent} ${theme.accentHover} shadow-lg shadow-pink-500/20 cursor-pointer flex items-center gap-2 transition-all active:scale-95`}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl text-white font-black text-xs uppercase tracking-wider bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   {editingMemory ? "Update Blossom" : "Plant Memory"}
@@ -774,48 +788,52 @@ export default function SettingsPage({
           </motion.div>
         )}
 
-        {/* SUBTAB 2: THEME SELECTOR (Both roles can view) */}
+        {/* SUBTAB 2: THEME SELECTOR */}
         {activeSubTab === "themes" && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <div className={`rounded-3xl p-6 ${theme.card} border ${theme.shadow}`}>
-              <h3 className={`text-xl font-bold font-sans mb-1 ${theme.textPrimary}`}>
-                Choose Garden Vibe
-              </h3>
-              <p className={`text-xs ${theme.textSecondary} mb-6`}>
-                Shift the emotional ambiance of Bloom Diary instantly.
-              </p>
+            <div className={`rounded-3xl p-4 sm:p-6 ${theme.card} border ${theme.border} ${theme.shadow} space-y-6`}>
+              <div>
+                <h3 className={`text-base font-black ${theme.textPrimary}`}>
+                  Choose Garden Vibe
+                </h3>
+                <p className={`text-xs ${theme.textSecondary} mt-0.5`}>
+                  Shift the emotional atmosphere of your diary instantly.
+                </p>
+              </div>
 
-              {/* Dynamic Auto Cycle Toggle */}
-              <div className="flex items-center justify-between p-4 mb-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-neutral-200/20 dark:border-neutral-800/40">
-                <div className="pr-4">
-                  <span className={`text-xs font-bold ${theme.textPrimary} flex items-center gap-1.5`}>
-                    <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+              {/* Auto Cycle Card */}
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                <div>
+                  <span className={`text-xs font-black ${theme.textPrimary} flex items-center gap-1.5`}>
+                    <Sparkles className="w-4 h-4 text-pink-400" />
                     Daily Dynamic Theme Cycle
                   </span>
-                  <p className={`text-[10px] ${theme.textSecondary} mt-0.5 leading-normal`}>
-                    Automatically cycle through Rapunzel, Barbie, Oswald, and all 17 themes day-by-day!
+                  <p className={`text-[10px] ${theme.textSecondary} mt-1 leading-relaxed`}>
+                    Automatically cycles through Rapunzel, Barbie, Oswald, and all 17 premium styles day-by-day!
                   </p>
                 </div>
                 <button
                   onClick={onToggleAutoCycle}
-                  className={`w-10 h-6 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-300 shrink-0 ${
-                    autoCycle ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700'
+                  style={{ width:46, height:26, padding:"3px" }}
+                  className={`relative flex items-center rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
+                    autoCycle ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'bg-gray-700'
                   }`}
                 >
                   <motion.div
                     layout
                     className="bg-white w-5 h-5 rounded-full shadow-md"
-                    animate={{ x: autoCycle ? 16 : 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    animate={{ x: autoCycle ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 35 }}
                   />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Theme Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {Object.entries(THEMES).map(([tName, tObj]) => {
                   const isSelected = selectedThemeName === tName;
                   
@@ -824,32 +842,32 @@ export default function SettingsPage({
                       key={tName}
                       id={`theme-btn-${tName}`}
                       onClick={() => onChangeTheme(tName as ThemeType)}
-                      className={`rounded-2xl p-4 border text-left cursor-pointer transition-all hover:scale-[1.02] ${tObj.bg} ${tObj.border} ${tObj.shadow} ${
+                      className={`group rounded-2xl p-4 border text-left cursor-pointer transition-all duration-300 hover:scale-[1.015] ${tObj.bg} ${tObj.border} ${tObj.shadow} ${
                         isSelected 
                           ? "ring-2 ring-pink-500 ring-offset-2 dark:ring-offset-black" 
-                          : "opacity-90 hover:opacity-100"
+                          : "opacity-85 hover:opacity-100"
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-3">
-                        <span className={`text-xs font-bold ${tObj.textPrimary}`}>{tObj.name}</span>
+                      <div className="flex justify-between items-center mb-4">
+                        <span className={`text-xs font-black ${tObj.textPrimary}`}>{tObj.name}</span>
                         {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
                             <Check className="w-2.5 h-2.5 text-white" />
                           </div>
                         )}
                       </div>
 
-                      {/* Little preview block */}
-                      <div className="flex gap-1.5 mt-2">
-                        <div className={`w-5 h-5 rounded-md ${tObj.card} border ${tObj.border}`} />
-                        <div className={`w-5 h-5 rounded-md ${tObj.accent} border ${tObj.border}`} />
+                      {/* Theme Colors Preview */}
+                      <div className="flex gap-1.5">
+                        <div className={`w-6 h-6 rounded-lg ${tObj.card} border ${tObj.border} shadow-sm shrink-0`} />
+                        <div className={`w-6 h-6 rounded-lg ${tObj.accent} border ${tObj.border} shadow-sm shrink-0`} />
                         {tObj.bgImage ? (
                           <div 
-                            className="w-5 h-5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-cover bg-center shrink-0" 
+                            className="w-6 h-6 rounded-lg border border-white/20 bg-cover bg-center shrink-0 shadow-sm" 
                             style={{ backgroundImage: `url(${tObj.bgImage})` }} 
                           />
                         ) : (
-                          <div className={`w-5 h-5 rounded-md ${tObj.accentLight} border ${tObj.border} flex items-center justify-center text-[10px]`}>
+                          <div className={`w-6 h-6 rounded-lg ${tObj.accentLight} border ${tObj.border} flex items-center justify-center text-xs shrink-0 shadow-sm`}>
                             🌸
                           </div>
                         )}
@@ -862,73 +880,78 @@ export default function SettingsPage({
           </motion.div>
         )}
 
-        {/* SUBTAB 3: MEDIA & MEMORIES LIST */}
+        {/* SUBTAB 3: MEDIA & MEMORIES INVENTORY */}
         {activeSubTab === "memories" && session.role !== null && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-3xl p-6 ${theme.card} ${theme.shadow} border`}
+            className={`rounded-3xl p-4 sm:p-6 ${theme.card} ${theme.shadow} border ${theme.border} space-y-5`}
           >
-            <h3 className={`text-xl font-bold font-sans mb-4 ${theme.textPrimary}`}>
-              Memory Inventory & Actions
-            </h3>
+            <div>
+              <h3 className={`text-base font-black ${theme.textPrimary}`}>
+                Memory Inventory
+              </h3>
+              <p className={`text-xs ${theme.textSecondary} mt-0.5`}>
+                View, duplicate, edit, or delete items inside your garden sanctuary.
+              </p>
+            </div>
 
-            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1.5 custom-scrollbar">
               {memories.map((m) => {
                 const flower = FLOWERS[m.flowerId];
                 return (
                   <div
                     key={m.id}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border ${theme.border} ${theme.card} ${theme.shadow}`}
+                    className={`flex items-center justify-between p-3 rounded-2xl border ${theme.border} bg-white/5 transition-all hover:bg-white/10`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className={`text-2xl ${theme.accentLight} w-10 h-10 rounded-full flex items-center justify-center`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`text-2xl w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0`}>
                         {flower?.emoji}
                       </span>
-                      <div>
-                        <h4 className={`text-xs font-bold ${theme.textPrimary} flex items-center gap-2`}>
+                      <div className="min-w-0">
+                        <h4 className={`text-xs font-black ${theme.textPrimary} flex items-center gap-2 truncate`}>
                           {m.title}
                           {m.isDraft && (
-                            <span className="bg-amber-100 text-amber-600 px-1.5 py-0.2 rounded text-[8px] font-semibold">
+                            <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded-md text-[8px] font-black uppercase tracking-wider">
                               Draft
                             </span>
                           )}
                         </h4>
-                        <p className={`text-[10px] ${theme.textSecondary} font-medium mt-0.5`}>
-                          📅 {m.date} | 🏷️ {flower?.name} Flower | {m.photos.length} Photos
+                        <p className={`text-[10px] ${theme.textSecondary} font-semibold mt-1`}>
+                          📅 {m.date} | 🏷️ {flower?.name} | {m.photos.length} Photos
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5 shrink-0">
                       {/* Edit */}
                       <button
                         id={`edit-memory-${m.id}`}
                         onClick={() => startEditMemory(m)}
-                        className={`p-2 ${theme.textSecondary} hover:${theme.accentText} hover:${theme.accentLight} rounded-xl cursor-pointer transition-colors`}
-                        title="Edit entry"
+                        className={`p-2 ${theme.textSecondary} hover:text-pink-400 hover:bg-pink-500/10 rounded-xl cursor-pointer transition-colors active:scale-90`}
+                        title="Edit memory"
                       >
-                        <Save className="w-4 h-4" />
+                        <Sliders className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Duplicate */}
                       <button
                         id={`duplicate-memory-${m.id}`}
                         onClick={() => handleDuplicateMemory(m)}
-                        className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-500/10 rounded-xl cursor-pointer transition-colors"
+                        className="p-2 text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl cursor-pointer transition-colors active:scale-90"
                         title="Duplicate"
                       >
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Delete */}
                       <button
                         id={`delete-memory-${m.id}`}
                         onClick={() => handleDeleteMemory(m.id)}
-                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-500/10 rounded-xl cursor-pointer transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl cursor-pointer transition-colors active:scale-90"
                         title="Delete"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -947,52 +970,59 @@ export default function SettingsPage({
           >
             {/* Passcode Updates */}
             {session.role === "admin" && (
-              <div className={`rounded-3xl p-6 ${theme.card} ${theme.shadow} border`}>
-                <h3 className={`text-lg font-bold font-sans mb-1 ${theme.textPrimary}`}>
-                  Manage Passcodes
-                </h3>
-                <p className={`text-xs ${theme.textSecondary} mb-4`}>
-                  Secure access for the Admin (You) and the Viewer (Her).
-                </p>
+              <div className={`rounded-3xl p-4 sm:p-6 ${theme.card} ${theme.shadow} border ${theme.border} space-y-5`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center shrink-0">
+                    <Key className="w-4 h-4 text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className={`text-base font-black ${theme.textPrimary}`}>
+                      Security Passcodes
+                    </h3>
+                    <p className={`text-xs ${theme.textSecondary} mt-0.5`}>
+                      Update access gates for both Admin (You) and Viewer (Her).
+                    </p>
+                  </div>
+                </div>
 
                 <form onSubmit={handleUpdateSecurity} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>
+                      <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>
                         Admin Passcode
                       </label>
                       <input
                         type="password"
-                        placeholder="New Admin passcode"
+                        placeholder="Enter new admin code"
                         value={adminPass}
                         onChange={(e) => setAdminPass(e.target.value)}
-                        className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none transition-all ${theme.textPrimary}`}
+                        className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors placeholder-gray-500 ${theme.textPrimary}`}
                       />
                     </div>
                     <div>
-                      <label className={`text-[10px] font-bold ${theme.textSecondary} uppercase tracking-wider block mb-1`}>
+                      <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>
                         Viewer Passcode (Her)
                       </label>
                       <input
                         type="password"
-                        placeholder="New Viewer passcode"
+                        placeholder="Enter new viewer code"
                         value={viewerPass}
                         onChange={(e) => setViewerPass(e.target.value)}
-                        className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} ${theme.card} outline-none transition-all ${theme.textPrimary}`}
+                        className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors placeholder-gray-500 ${theme.textPrimary}`}
                       />
                     </div>
                   </div>
 
                   {securitySuccess && (
-                    <p className="text-[10px] font-bold text-green-500">
-                      ✅ {securitySuccess}
+                    <p className="text-[10px] font-black text-emerald-400 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> {securitySuccess}
                     </p>
                   )}
 
                   <button
                     id="update-passcodes-btn"
                     type="submit"
-                    className={`px-4 py-2 rounded-xl text-white font-bold text-xs ${theme.accent} ${theme.accentHover} shadow cursor-pointer`}
+                    className="px-5 py-2.5 rounded-xl text-white font-black text-xs uppercase tracking-wider bg-gradient-to-r from-pink-500 to-violet-500 shadow-md active:scale-95 transition-transform cursor-pointer"
                   >
                     Update Passcodes
                   </button>
@@ -1001,27 +1031,34 @@ export default function SettingsPage({
             )}
 
             {/* Backups Export & Restore */}
-            <div className={`rounded-3xl p-6 ${theme.card} ${theme.shadow} border`}>
-              <h3 className={`text-lg font-bold font-sans mb-1 ${theme.textPrimary}`}>
-                Backup & Portability
-              </h3>
-              <p className={`text-xs ${theme.textSecondary} mb-4`}>
-                Download a JSON copy of all memories, flowers, and reminders to keep them safe forever.
-              </p>
+            <div className={`rounded-3xl p-4 sm:p-6 ${theme.card} ${theme.shadow} border ${theme.border} space-y-5`}>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center shrink-0">
+                  <FileCode className="w-4 h-4 text-violet-400" />
+                </div>
+                <div>
+                  <h3 className={`text-base font-black ${theme.textPrimary}`}>
+                    Backup & Portability
+                  </h3>
+                  <p className={`text-xs ${theme.textSecondary} mt-0.5`}>
+                    Keep your memories safe forever by exporting database archives.
+                  </p>
+                </div>
+              </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   id="export-backup-btn"
                   onClick={handleExportBackup}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border ${theme.border} ${theme.card} text-xs font-bold shadow-sm cursor-pointer hover:opacity-90 transition-all ${theme.textPrimary}`}
+                  className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${theme.border} bg-white/5 text-xs font-black shadow-sm cursor-pointer hover:bg-white/10 transition-colors text-pink-400`}
                 >
-                  <FileCode className="w-4 h-4 text-pink-500" />
+                  <FileCode className="w-4 h-4" />
                   Export JSON Backup
                 </button>
 
                 {session.role === "admin" && (
-                  <label className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border ${theme.border} ${theme.card} text-xs font-bold shadow-sm cursor-pointer hover:opacity-90 transition-all ${theme.textPrimary}`}>
-                    <Upload className="w-4 h-4 text-green-500" />
+                  <label className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${theme.border} bg-white/5 text-xs font-black shadow-sm cursor-pointer hover:bg-white/10 transition-colors text-emerald-400`}>
+                    <Upload className="w-4 h-4" />
                     Restore Database
                     <input
                       type="file"
@@ -1038,52 +1075,67 @@ export default function SettingsPage({
       </div>
 
       {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-24 right-6 z-50 animate-pulse">
-          <div className={`px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border text-xs font-bold ${
-            toastMessage.isError 
-              ? "bg-red-50 text-red-600 border-red-200" 
-              : "bg-green-50 text-green-700 border-green-200"
-          }`}>
-            <span>{toastMessage.isError ? "⚠️" : "✨"}</span>
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Memory Confirmation Modal */}
-      {deletingMemoryId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`w-full max-w-sm rounded-3xl p-6 ${theme.card} border border-pink-100/10 ${theme.shadow} space-y-4`}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: 10 }}
+            className="fixed bottom-24 right-6 z-50"
           >
-            <h3 className={`text-lg font-bold ${theme.textPrimary}`}>
-              Dig up memory flower?
-            </h3>
-            <p className={`text-xs ${theme.textSecondary}`}>
-              Are you sure you want to delete this memory? This action is permanent and will remove the flower from your garden forever.
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                id="cancel-delete-memory-btn"
-                onClick={() => setDeletingMemoryId(null)}
-                className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                id="confirm-delete-memory-btn"
-                onClick={confirmDeleteMemory}
-                className="px-4 py-2 text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl cursor-pointer"
-              >
-                Delete Forever
-              </button>
+            <div className={`px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border text-xs font-bold ${
+              toastMessage.isError 
+                ? "bg-red-500/10 text-red-400 border-red-500/25 backdrop-blur-md" 
+                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/25 backdrop-blur-md"
+            }`}>
+              <span>{toastMessage.isError ? "⚠️" : "✨"}</span>
+              <span>{toastMessage.text}</span>
             </div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
+
+      {/* Delete Memory Confirmation Modal */}
+      <AnimatePresence>
+        {deletingMemoryId && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              className={`w-full max-w-sm rounded-[28px] p-6 ${theme.card} border ${theme.border} ${theme.shadow} space-y-4`}
+            >
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <h3 className={`text-base font-black ${theme.textPrimary}`}>
+                  Remove memory flower?
+                </h3>
+                <p className={`text-xs ${theme.textSecondary} leading-relaxed`}>
+                  This action is permanent. This flower and all of its photos will be removed from your garden sanctuary forever.
+                </p>
+              </div>
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  id="cancel-delete-memory-btn"
+                  onClick={() => setDeletingMemoryId(null)}
+                  className={`flex-1 py-2.5 text-xs font-bold rounded-xl border ${theme.border} ${theme.textSecondary} active:scale-95 transition-transform`}
+                >
+                  Cancel
+                </button>
+                <button
+                  id="confirm-delete-memory-btn"
+                  onClick={confirmDeleteMemory}
+                  className="flex-1 py-2.5 text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl active:scale-95 transition-transform"
+                >
+                  Delete Forever
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
