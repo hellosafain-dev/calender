@@ -168,10 +168,41 @@ export const API = {
   },
 
   async uploadPhoto(base64File: string, name: string): Promise<{ success: boolean; url: string }> {
+    // Compress the image before uploading to avoid Vercel/Express payload limits
+    const compressedBase64 = await new Promise<string>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Max dimensions
+        const MAX_DIM = 1200;
+        if (width > height && width > MAX_DIM) {
+          height *= MAX_DIM / width;
+          width = MAX_DIM;
+        } else if (height > MAX_DIM) {
+          width *= MAX_DIM / height;
+          height = MAX_DIM;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(base64File); // Fallback
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        // Compress to JPEG at 70% quality
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = () => resolve(base64File); // Fallback
+      img.src = base64File;
+    });
+
     const res = await resilientFetch(`${BASE_URL}/api/upload`, {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ file: base64File, name }),
+      body: JSON.stringify({ file: compressedBase64, name: name.replace(/\.[^/.]+$/, "") + ".jpg" }),
     });
     if (!res.ok) throw new Error('Failed to upload photo');
     return res.json();
