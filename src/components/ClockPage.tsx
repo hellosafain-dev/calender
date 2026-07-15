@@ -505,56 +505,103 @@ export default function ClockPage({ reminders, onRefreshReminders, theme }: Cloc
               const meta = TYPE_META[r.type];
               return (
                 <motion.div key={r.id}
-                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 10 }}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
+                  className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
                     r.isActive
-                      ? `bg-white/5 border-white/10`
-                      : "bg-black/5 border-transparent opacity-40"
+                      ? "bg-white/5 border-white/10"
+                      : "bg-black/20 border-white/5"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg border ${meta.color}`}>
-                      {meta.icon}
-                    </div>
-                    <div>
-                      <p className={`text-xs font-bold ${r.isActive ? theme.textPrimary : `${theme.textSecondary} line-through`}`}>
-                        {r.title}
-                      </p>
-                      <div className={`flex items-center gap-2 mt-0.5 text-[10px] font-semibold ${theme.textSecondary}`}>
-                        <span>🕒 {r.time}</span>
-                        {r.date && <span>📅 {r.date}</span>}
-                        {r.repeat !== "none" && (
-                          <span className="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider border border-emerald-500/20">
-                            🔁 {REPEAT_LABELS[r.repeat]}
-                          </span>
-                        )}
+                  <div className="flex items-center justify-between p-3.5 gap-3">
+                    {/* Left: icon + info */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Type icon with glow when active */}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl border shrink-0 transition-all duration-300 ${
+                        r.isActive ? meta.color : "bg-gray-800/50 border-gray-700/50 grayscale opacity-50"
+                      }`}>
+                        {meta.icon}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className={`text-xs font-bold truncate transition-all duration-300 ${
+                          r.isActive ? theme.textPrimary : "text-gray-500 line-through"
+                        }`}>
+                          {r.title}
+                        </p>
+                        <div className={`flex items-center flex-wrap gap-1.5 mt-1 text-[10px] font-semibold transition-all duration-300 ${
+                          r.isActive ? theme.textSecondary : "text-gray-600"
+                        }`}>
+                          <span>🕒 {r.time}</span>
+                          {r.date && <span>📅 {r.date}</span>}
+                          {r.repeat !== "none" && (
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider border ${
+                              r.isActive
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : "bg-gray-800/50 text-gray-600 border-gray-700/30"
+                            }`}>
+                              🔁 {REPEAT_LABELS[r.repeat]}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Right: toggle + delete */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {/* Crystal-clear toggle with ON/OFF label */}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <button
+                          onClick={() => handleToggle(r.id, r.isActive)}
+                          aria-label={r.isActive ? "Turn off reminder" : "Turn on reminder"}
+                          className={`relative flex items-center rounded-full transition-all duration-300 active:scale-90 ${
+                            r.isActive
+                              ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                              : "bg-gray-600/60"
+                          }`}
+                          style={{ width: 48, height: 26, padding: "3px" }}
+                        >
+                          <motion.div
+                            layout
+                            className={`rounded-full shadow-md flex items-center justify-center transition-colors duration-300 ${
+                              r.isActive ? "bg-white" : "bg-gray-400"
+                            }`}
+                            style={{ width: 20, height: 20 }}
+                            animate={{ x: r.isActive ? 22 : 0 }}
+                            transition={{ type: "spring", stiffness: 600, damping: 35 }}
+                          >
+                            {r.isActive
+                              ? <span style={{ fontSize: 8 }}>✓</span>
+                              : <span style={{ fontSize: 8 }}>✕</span>
+                            }
+                          </motion.div>
+                        </button>
+                        <span className={`text-[8px] font-black tracking-widest uppercase transition-colors duration-300 ${
+                          r.isActive ? "text-emerald-400" : "text-gray-500"
+                        }`}>
+                          {r.isActive ? "ON" : "OFF"}
+                        </span>
+                      </div>
+
+                      {/* Delete */}
+                      <button onClick={() => setDeletingId(r.id)}
+                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-90">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {/* Toggle */}
-                    <button onClick={() => handleToggle(r.id, r.isActive)}
-                      className={`w-10 h-5.5 rounded-full relative flex items-center p-0.5 transition-colors duration-300 ${
-                        r.isActive ? "bg-pink-500" : "bg-gray-600"
-                      }`}
-                      style={{ minWidth: 40, height: 22 }}>
-                      <motion.div layout className="w-4 h-4 rounded-full bg-white shadow-sm"
-                        animate={{ x: r.isActive ? 18 : 0 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }} />
-                    </button>
-                    {/* Delete */}
-                    <button onClick={() => setDeletingId(r.id)}
-                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors active:scale-90">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+
+                  {/* Active indicator bar at bottom */}
+                  {r.isActive && (
+                    <div className="h-0.5 bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
+                  )}
                 </motion.div>
               );
             })
           )}
         </div>
       </div>
+
 
       {/* ── Delete confirm modal ── */}
       <AnimatePresence>
