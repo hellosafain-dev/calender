@@ -120,8 +120,23 @@ export default function SettingsPage({
   useEffect(() => {
     if (preSelectedDate) {
       setFormDate(preSelectedDate);
+      const existingMemory = memories.find(m => m.date === preSelectedDate && !m.isDraft);
+      if (existingMemory) {
+        startEditMemory(existingMemory);
+      } else {
+        setEditingMemory(null);
+        setFormTitle("");
+        setFormNote("");
+        setFormFlower("rose");
+        setFormMood("peaceful");
+        setFormWeather("sunny");
+        setFormMusic("");
+        setFormTags("");
+        setFormPhotos([]);
+        setFormDraft(false);
+      }
     }
-  }, [preSelectedDate]);
+  }, [preSelectedDate, memories]);
 
   // Handle Authentication
   const handleLogin = async (e: React.FormEvent) => {

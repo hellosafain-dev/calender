@@ -574,6 +574,32 @@ const upload = multer({
 });
 
 app.post('/api/upload', protect, upload.single('photo'), (req: any, res) => {
+  // Support both Multipart-Form and JSON base64 payloads
+  if (req.body && req.body.file && typeof req.body.file === 'string') {
+    try {
+      const filePayload = req.body.file;
+      const fileNameParam = req.body.name || 'photo.jpg';
+      
+      const matches = filePayload.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        return res.status(400).json({ error: 'Invalid base64 format' });
+      }
+
+      const contentType = matches[1];
+      const base64Data = matches[2];
+      const fileBuffer = Buffer.from(base64Data, 'base64');
+      
+      const originalExt = fileNameParam.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}-${Math.floor(Math.random() * 1e9)}.${originalExt}`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+
+      fs.writeFileSync(filePath, fileBuffer);
+      return res.json({ success: true, url: `/uploads/${fileName}` });
+    } catch (err: any) {
+      return res.status(500).json({ error: `Base64 upload failed: ${err.message}` });
+    }
+  }
+
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
