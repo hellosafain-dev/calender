@@ -20,7 +20,7 @@ import { Flower, ShieldAlert } from "lucide-react";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 15, // 15 seconds
       retry: 2,
     },
   },
@@ -132,40 +132,53 @@ export default function App() {
     return () => clearInterval(interval);
   }, [reminders, triggeredToday]);
 
-  // Load all server-side data on mount
-  const loadAllData = async () => {
+  // Load all server-side data on mount (with optional visible spinner)
+  const loadAllData = async (showSpinner = true) => {
     try {
-      setLoading(true);
+      if (showSpinner) {
+        setLoading(true);
+      }
       setError(null);
-
+ 
       // Fetch active settings & themes
       const sData = await API.getSettings();
       setSelectedThemeName(sData.theme);
       setDiaryTitle(sData.title);
       setAutoCycle(!!sData.autoCycle);
-
+ 
       // Fetch memories & reminders
       const [mList, rList] = await Promise.all([
         API.getMemories(),
         API.getReminders()
       ]);
-
+ 
       setMemories(mList);
       setReminders(rList);
     } catch (err: any) {
       console.error("Failed to fetch full-stack server state:", err);
-      setError("Failed to coordinate data with our digital garden server. Please refresh.");
+      if (showSpinner) {
+        setError("Failed to coordinate data with our digital garden server. Please refresh.");
+      }
     } finally {
-      setLoading(false);
+      if (showSpinner) {
+        setLoading(false);
+      }
     }
   };
-
+ 
   useEffect(() => {
     // Read session from local storage on bootstrap
     const activeSession = getSession();
     setSession(activeSession);
     
-    loadAllData();
+    loadAllData(true);
+
+    // Regularly update data in the background every 2 minutes (120000ms)
+    const intervalId = setInterval(() => {
+      loadAllData(false);
+    }, 120000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Update document body style when active theme transitions
@@ -306,7 +319,7 @@ export default function App() {
           <p className="text-sm text-red-500 max-w-md mt-2">{error}</p>
         </div>
         <button
-          onClick={loadAllData}
+          onClick={() => loadAllData(true)}
           className="px-5 py-2.5 rounded-full bg-red-600 text-white font-bold text-xs shadow-md cursor-pointer hover:bg-red-700 active:scale-95 transition-all"
         >
           Retry Connection
