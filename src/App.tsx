@@ -16,6 +16,8 @@ import ClockPage from "./components/ClockPage.js";
 import SettingsPage from "./components/SettingsPage.js";
 import ErrorBoundary from "./components/ErrorBoundary.js";
 import { Flower, ShieldAlert } from "lucide-react";
+import GlowingLanterns from "./components/GlowingLanterns.js";
+import BirthdaySurprise from "./components/BirthdaySurprise.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +27,71 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function playBirthdayChime() {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return () => {};
+    const ctx = new Ctx();
+    
+    // Play celestial chime arpeggios
+    const playArpeggio = (timeOffset: number) => {
+      const notes = [523.25, 659.25, 783.99, 987.77, 1046.50, 1318.51, 1567.98, 1975.53];
+      let t = ctx.currentTime + timeOffset;
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.35, t + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 1.3);
+        t += 0.15;
+      });
+    };
+
+    // Loop chime arpeggio every 2.5 seconds
+    const interval = setInterval(() => {
+      playArpeggio(0);
+    }, 2500);
+    
+    playArpeggio(0);
+
+    // Stop after exactly 15 seconds
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      try { ctx.close(); } catch {}
+    }, 15000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+      try { ctx.close(); } catch {}
+    };
+  } catch {
+    return () => {};
+  }
+}
+
+function sendBirthdayNotification() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    const n = new Notification("✨ A Magical Surprise Awaits...", {
+      body: "Happy Birthday, My Sweetheart! Open the app to see your surprise. 👑💖",
+      icon: "/icons/icon-192.png",
+      tag: "birthday-surprise",
+      requireInteraction: true
+    });
+    n.onclick = () => {
+      window.focus();
+      n.close();
+    };
+  }
+}
 
 export default function App() {
   // Navigation active tab index (0: Calendar, 1: Timeline, 2: Reminders, 3: Settings)
@@ -46,6 +113,39 @@ export default function App() {
 
   // Navigation Callback dates (e.g. tapping empty calendar date takes Admin to Write entry with that pre-selected date)
   const [preSelectedDate, setPreSelectedDate] = useState<string | null>(null);
+
+  // Check if today is the special birthday window (July 17, 23:59:00 to July 18, 23:59:59)
+  // or if simulate_birthday=true query param is set
+  const checkIsBirthday = () => {
+    const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
+    if (isSimulated) return true;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const bdayStart = new Date(currentYear, 6, 17, 23, 59, 0).getTime();
+    const bdayEnd = new Date(currentYear, 6, 18, 23, 59, 59).getTime();
+    const nowTime = now.getTime();
+    return nowTime >= bdayStart && nowTime <= bdayEnd;
+  };
+
+  const isBirthday = checkIsBirthday();
+
+  const [letterRead, setLetterRead] = useState(() => {
+    const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
+    if (isSimulated) return false;
+    return localStorage.getItem("bloom_birthday_letter_read") === "true";
+  });
+
+  const themeKeys: ThemeType[] = [
+    'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean',
+    'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust'
+  ];
+  const activeThemeName = isBirthday
+    ? 'rapunzel'
+    : autoCycle
+      ? themeKeys[(new Date().getDate() - 1) % themeKeys.length]
+      : selectedThemeName;
+  const currentTheme = THEMES[activeThemeName];
 
   // Triggered reminders tracking
   const [triggeredToday, setTriggeredToday] = useState<{[reminderId: string]: string}>({});
@@ -181,15 +281,68 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Trigger birthday alarm sound & alert notification when timer ends
+  useEffect(() => {
+    if (!isBirthday) return;
+    
+    // Ensure it only triggers once per session
+    if (window.sessionStorage.getItem("bloom_birthday_alarm_played") === "true") return;
+    window.sessionStorage.setItem("bloom_birthday_alarm_played", "true");
+
+    let stopAudio: (() => void) | null = null;
+
+    // Send notification immediately if already granted
+    if (Notification.permission === "granted") {
+      sendBirthdayNotification();
+    }
+
+    const startBirthdayEffects = () => {
+      // 1. Play celestial chime
+      if (!stopAudio) {
+        stopAudio = playBirthdayChime();
+      }
+
+      // 2. Request notification permission (or trigger if granted)
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((perm) => {
+          if (perm === "granted") {
+            sendBirthdayNotification();
+          }
+        });
+      } else if (Notification.permission === "granted") {
+        sendBirthdayNotification();
+      }
+    };
+
+    // Trigger immediately by default when the timer stops
+    startBirthdayEffects();
+
+    // Listen to first click/touch on the window as fallback to play audio and trigger notification if blocked
+    const onUserInteraction = () => {
+      startBirthdayEffects();
+      window.removeEventListener("click", onUserInteraction);
+      window.removeEventListener("touchstart", onUserInteraction);
+    };
+
+    window.addEventListener("click", onUserInteraction);
+    window.addEventListener("touchstart", onUserInteraction);
+
+    return () => {
+      window.removeEventListener("click", onUserInteraction);
+      window.removeEventListener("touchstart", onUserInteraction);
+      if (stopAudio) stopAudio();
+    };
+  }, [isBirthday]);
+
   // Update document body style when active theme transitions
   useEffect(() => {
-    const currentTheme = THEMES[selectedThemeName];
+    const currentTheme = THEMES[activeThemeName];
     // Remove all possible bg classes
     const body = document.body;
     if (body) {
       body.className = `${currentTheme.bg} transition-colors duration-500 font-sans antialiased text-gray-800 selection:bg-pink-150`;
     }
-  }, [selectedThemeName]);
+  }, [activeThemeName]);
 
   // Update browser favicon dynamically to match the current date and active theme
   useEffect(() => {
@@ -206,10 +359,11 @@ export default function App() {
       forest: "#4AA685",
       ocean: "#4FADD2",
       elegant_dark: "#FFFFFF",
+      rapunzel: "#FCD34D",
     };
 
-    const accentColor = themeColors[selectedThemeName] || "#EC708B";
-    const textColor = selectedThemeName === "elegant_dark" ? "#000000" : accentColor;
+    const accentColor = themeColors[activeThemeName] || "#EC708B";
+    const textColor = activeThemeName === "elegant_dark" ? "#000000" : accentColor;
 
     // Render an SVG favicon representing the calendar icon with the correct date
     const svg = `
@@ -247,7 +401,7 @@ export default function App() {
       document.head.appendChild(appleLink);
     }
     appleLink.href = `data:image/svg+xml;utf8,${svg}`;
-  }, [selectedThemeName]);
+  }, [activeThemeName]);
 
 
   const handleThemeChange = async (themeName: ThemeType) => {
@@ -285,14 +439,7 @@ export default function App() {
     setActiveTab(3); // Switch to Settings tab
   };
 
-  const themeKeys: ThemeType[] = [
-    'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean',
-    'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust'
-  ];
-  const activeThemeName = autoCycle
-    ? themeKeys[(new Date().getDate() - 1) % themeKeys.length]
-    : selectedThemeName;
-  const currentTheme = THEMES[activeThemeName];
+
 
   if (loading && !memories.length) {
     return (
@@ -351,6 +498,14 @@ export default function App() {
           <div className="absolute top-1/4 -right-40 w-[400px] h-[400px] bg-amber-950/15 rounded-full blur-[110px] opacity-60" />
           <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-red-950/10 rounded-full blur-[120px] opacity-50" />
         </div>
+      )}
+
+      {/* Rapunzel Birthday Glowing Lanterns background overlay */}
+      {isBirthday && <GlowingLanterns />}
+
+      {/* Birthday Surprise Cinematic overlay */}
+      {isBirthday && !letterRead && (
+        <BirthdaySurprise onClose={() => { setLetterRead(true); localStorage.setItem("bloom_birthday_letter_read", "true"); }} />
       )}
 
       {/* Dynamic Tab Mounting */}

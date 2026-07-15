@@ -11,6 +11,94 @@ import { ThemeConfig, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
 import { fetchCurrentWeather, WeatherInfo } from "../lib/weather.js";
 
+function BirthdayCountdownCard({ theme }: { theme: ThemeConfig }) {
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const target = new Date(currentYear, 6, 17, 23, 59, 0).getTime(); // 17 July 11:59 PM
+    const diff = target - now.getTime();
+    
+    if (diff <= 0) return null;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / 1000 / 60) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    
+    return { days, hours, minutes, seconds };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!timeLeft) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="rounded-3xl p-5 border relative overflow-hidden bg-[#291B3E]/60 backdrop-blur-xl border-[#D97706]/20 shadow-[0_8px_32px_rgba(28,18,44,0.3)] text-center"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+      <div className="relative z-10 space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#C084FC] flex items-center gap-1.5 animate-pulse mx-auto">
+            <Sparkles className="w-3.5 h-3.5 text-[#FCD34D]" />
+            A Magical Surprise Awaits
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-2 select-none">
+          {[
+            { label: "Days", val: timeLeft.days },
+            { label: "Hours", val: timeLeft.hours },
+            { label: "Mins", val: timeLeft.minutes },
+            { label: "Secs", val: timeLeft.seconds }
+          ].map((item, idx) => (
+            <div key={idx} className="bg-white/5 border border-[#D97706]/10 rounded-2xl p-2 sm:p-2.5 shadow-sm">
+              <span className="block text-sm sm:text-lg font-black text-[#FDE047] tracking-tight tabular-nums">
+                {String(item.val).padStart(2, "0")}
+              </span>
+              <span className="block text-[7px] sm:text-[8px] font-extrabold uppercase tracking-widest text-[#C084FC] mt-0.5">
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function BirthdaySurpriseCard({ theme }: { theme: ThemeConfig }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl p-5 border relative overflow-hidden bg-gradient-to-br from-[#291B3E] via-[#3d2460] to-[#1c122c] border-[#FCD34D]/30 shadow-[0_0_30px_rgba(252,211,77,0.25)] text-center"
+    >
+      <div className="relative z-10 space-y-4">
+        <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg animate-bounce">
+          <Sparkles className="w-5.5 h-5.5 text-white" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-sm sm:text-base font-black tracking-tight text-white">
+            Happy Birthday, My Princess! 👑💖
+          </h3>
+          <p className="text-[10px] sm:text-[11px] text-[#C084FC] leading-relaxed">
+            The lanterns are glowing, the stars are shining, and the entire garden is blooming just for you today. You make my world magical.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 interface CalendarPageProps {
   memories: Memory[];
   onRefreshMemories: () => void;
@@ -33,6 +121,29 @@ export default function CalendarPage({
   const currentYearOfToday = 2025; // Base year set to 2025 as requested
   const minDate = new Date(currentYearOfToday, 9, 18); // October 18, 2025
   const maxDate = new Date(currentYearOfToday + 30, 9, 18); // October 18, 2055
+
+  const checkIsBirthday = () => {
+    const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
+    if (isSimulated) return true;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const bdayStart = new Date(currentYear, 6, 17, 23, 59, 0).getTime();
+    const bdayEnd = new Date(currentYear, 6, 18, 23, 59, 59).getTime();
+    const nowTime = now.getTime();
+    return nowTime >= bdayStart && nowTime <= bdayEnd;
+  };
+
+  const isBirthday = checkIsBirthday();
+
+  const checkIsBeforeBirthday = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const target = new Date(currentYear, 6, 17, 23, 59, 0).getTime();
+    return now.getTime() < target;
+  };
+
+  const isBeforeBirthday = checkIsBeforeBirthday();
 
   // Initialize view to minDate if current date is before minDate, maxDate if after maxDate, else today
   const [currentYear, setCurrentYear] = useState(() => {
@@ -406,6 +517,10 @@ export default function CalendarPage({
 
         {/* Today Quote & Preview Column */}
         <div className="space-y-6">
+          {/* Birthday Countdown / Surprise Cards */}
+          {isBeforeBirthday && !isBirthday && <BirthdayCountdownCard theme={theme} />}
+          {isBirthday && <BirthdaySurpriseCard theme={theme} />}
+
           {/* Greeting Card */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
