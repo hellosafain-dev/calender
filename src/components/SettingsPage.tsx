@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
-import { Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode, Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X } from "lucide-react";
+import { Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode, Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X, Download } from "lucide-react";
 import { Memory, ThemeType } from "../types.js";
 import { ThemeConfig, THEMES, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
@@ -44,6 +44,43 @@ export default function SettingsPage({
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
+
+  useEffect(() => {
+    const ua = window.navigator.userAgent;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = ('standalone' in window.navigator) && (window.navigator as any).standalone;
+    
+    if (isIOSDevice && !isStandalone) {
+      setIsIOS(true);
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (isIOS) {
+      alert("To install Bloom Diary on iOS: tap the 'Share' icon at the bottom of Safari and select 'Add to Home Screen'.");
+      return;
+    }
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("App is either already installed, or your browser doesn't support automatic installation. Try 'Add to Home Screen' in your browser menu!");
+    }
+  };
   // Settings Sub-Tabs: "dashboard", "themes", "memories", "security"
   const [activeSubTab, setActiveSubTab] = useState<"dashboard" | "themes" | "memories" | "security">("dashboard");
 
@@ -420,14 +457,26 @@ export default function SettingsPage({
           </div>
         </div>
 
-        <button
-          id="logout-btn"
-          onClick={onLogout}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold cursor-pointer transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
-        </button>
+        <div className="flex items-center gap-2">
+          {(!isIOS || deferredPrompt) && (
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold cursor-pointer transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Install App
+            </button>
+          )}
+
+          <button
+            id="logout-btn"
+            onClick={onLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold cursor-pointer transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Settings Navigation Sub-Tabs */}
