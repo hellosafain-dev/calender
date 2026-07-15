@@ -1,16 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabase } from '../../lib/supabase.js';
 import webpush from 'web-push';
+import { getVapidKeys } from '../../lib/vercel-push.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const publicKey = process.env.VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-
-  if (!publicKey || !privateKey) {
-    return res.status(500).json({ error: 'VAPID keys not configured on Vercel' });
-  }
+  const { publicKey, privateKey } = await getVapidKeys();
 
   webpush.setVapidDetails(
     'mailto:support@bloom-diary.dev',

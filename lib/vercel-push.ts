@@ -2,25 +2,49 @@ import { supabase } from './supabase.js';
 import webpush from 'web-push';
 import { FLOWERS } from '../src/lib/themes.js';
 
-// Setup VAPID details
-const publicKey = process.env.VAPID_PUBLIC_KEY;
-const privateKey = process.env.VAPID_PRIVATE_KEY;
+export async function getVapidKeys(): Promise<{ publicKey: string; privateKey: string }> {
+  try {
+    const { data: dbKeys } = await supabase
+      .from('settings')
+      .select('key, value')
+      .in('key', ['vapid_public_key', 'vapid_private_key']);
 
-if (publicKey && privateKey) {
-  webpush.setVapidDetails(
-    'mailto:support@bloom-diary.dev',
-    publicKey,
-    privateKey
-  );
+    const map: Record<string, string> = {};
+    (dbKeys || []).forEach((r: any) => { map[r.key] = r.value; });
+
+    let publicKey = map['vapid_public_key'];
+    let privateKey = map['vapid_private_key'];
+
+    if (!publicKey || !privateKey) {
+      console.log('Generating VAPID keys dynamically in Supabase...');
+      const generated = webpush.generateVAPIDKeys();
+      
+      await supabase.from('settings').upsert({ key: 'vapid_public_key', value: generated.publicKey }, { onConflict: 'key' });
+      await supabase.from('settings').upsert({ key: 'vapid_private_key', value: generated.privateKey }, { onConflict: 'key' });
+      
+      publicKey = generated.publicKey;
+      privateKey = generated.privateKey;
+    }
+
+    return { publicKey, privateKey };
+  } catch (err) {
+    console.error('Error fetching/generating VAPID keys:', err);
+    // Fallback if DB fails
+    const generated = webpush.generateVAPIDKeys();
+    return { publicKey: generated.publicKey, privateKey: generated.privateKey };
+  }
 }
 
 export async function broadcastPushNotification(payload: { title: string; body: string; icon?: string; tag?: string; url?: string }) {
-  if (!publicKey || !privateKey) {
-    console.warn('VAPID keys not configured - skipping push notification');
-    return;
-  }
-
   try {
+    const { publicKey, privateKey } = await getVapidKeys();
+
+    webpush.setVapidDetails(
+      'mailto:support@bloom-diary.dev',
+      publicKey,
+      privateKey
+    );
+
     const { data: subscriptions } = await supabase
       .from('push_subscriptions')
       .select('*');
