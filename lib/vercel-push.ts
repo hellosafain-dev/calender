@@ -1,6 +1,19 @@
 import { supabase } from './supabase.js';
 import webpush from 'web-push';
-import { FLOWERS } from '../src/lib/themes.js';
+
+function getFlowerName(flowerId: string): string {
+  const map: Record<string, string> = {
+    rose: 'Rose',
+    tulip: 'Tulip',
+    lavender: 'Lavender',
+    sunflower: 'Sunflower',
+    cherry_blossom: 'Cherry Blossom',
+    jasmine: 'Jasmine',
+    hydrangea: 'Hydrangea',
+    peony: 'Peony'
+  };
+  return map[flowerId] || 'a new flower';
+}
 
 export async function getVapidKeys(): Promise<{ publicKey: string; privateKey: string }> {
   try {
@@ -76,8 +89,7 @@ export async function broadcastPushNotification(payload: { title: string; body: 
 
 export async function notifyFlowerUpdate(flowerId: string, title: string) {
   try {
-    const flower = FLOWERS[flowerId];
-    const flowerName = flower ? flower.name : 'a new flower';
+    const flowerName = getFlowerName(flowerId);
     await broadcastPushNotification({
       title: 'New Flower Planted! 🌸',
       body: `"${title}" has been added as a ${flowerName} to the Sanctuary.`,
