@@ -151,6 +151,7 @@ export default function App() {
   const [selectedThemeName, setSelectedThemeName] = useState<ThemeType>("cherry");
   const [autoCycle, setAutoCycle] = useState(false);
   const [diaryTitle, setDiaryTitle] = useState("Bloom Diary");
+  const [customGreeting, setCustomGreeting] = useState("");
 
   // Loading & Error States
   const [loading, setLoading] = useState(true);
@@ -340,6 +341,7 @@ async function initPushNotifications() {
       setSelectedThemeName(sData.theme);
       setDiaryTitle(sData.title);
       setAutoCycle(!!sData.autoCycle);
+      setCustomGreeting(sData.customGreeting || "");
  
       // Fetch memories & reminders
       const [mList, rList] = await Promise.all([
@@ -621,6 +623,7 @@ async function initPushNotifications() {
                 theme={currentTheme}
                 session={session}
                 onNavigateToSettingsWithDate={handleNavigateToSettingsWithDate}
+                customGreeting={customGreeting}
               />
             </motion.div>
           )}

@@ -114,6 +114,32 @@ export default function SettingsPage({
   const [deletingMemoryId, setDeletingMemoryId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
+  // Greeting Override States
+  const [greetingInput, setGreetingInput] = useState("");
+  const [greetingSuccess, setGreetingSuccess] = useState("");
+
+  useEffect(() => {
+    if (session.role === "admin") {
+      API.getSettings().then((s) => {
+        setGreetingInput(s.customGreeting || "");
+      }).catch(console.error);
+    }
+  }, [session.role]);
+
+  const handleUpdateGreeting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGreetingSuccess("");
+    try {
+      await API.updateSettings({ customGreeting: greetingInput });
+      setGreetingSuccess("Sanctuary greeting updated successfully!");
+      setToastMessage({ text: "Sanctuary greeting updated successfully!" });
+      onRefreshMemories(); // Refresh settings in parent App component
+    } catch (err) {
+      console.error(err);
+      setToastMessage({ text: "Failed to update greeting.", isError: true });
+    }
+  };
+
   useEffect(() => {
     if (toastMessage) {
       const timer = setTimeout(() => setToastMessage(null), 4000);
@@ -968,6 +994,54 @@ export default function SettingsPage({
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
+            {/* Custom Greeting Override (Admin only) */}
+            {session.role === "admin" && (
+              <div className={`rounded-3xl p-4 sm:p-6 ${theme.card} ${theme.shadow} border ${theme.border} space-y-5`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className={`text-base font-black ${theme.textPrimary}`}>
+                      Sanctuary Greeting Override
+                    </h3>
+                    <p className={`text-xs ${theme.textSecondary} mt-0.5`}>
+                      Set an optional custom greeting or status message to be displayed on the main dashboard card. Leave blank to show the time-based greeting and dynamic AI romantic quotes.
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleUpdateGreeting} className="space-y-4">
+                  <div>
+                    <label className={`text-[10px] font-black ${theme.textSecondary} uppercase tracking-wider block mb-1.5`}>
+                      Greeting / Status Override (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Good night sweetheart, thinking of you always"
+                      value={greetingInput}
+                      onChange={(e) => setGreetingInput(e.target.value)}
+                      className={`w-full px-4 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 transition-colors placeholder-gray-500 ${theme.textPrimary}`}
+                    />
+                  </div>
+
+                  {greetingSuccess && (
+                    <p className="text-[10px] font-black text-emerald-400 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> {greetingSuccess}
+                    </p>
+                  )}
+
+                  <button
+                    id="update-greeting-btn"
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl text-white font-black text-xs uppercase tracking-wider bg-gradient-to-r from-pink-500 to-violet-500 shadow-md active:scale-95 transition-transform cursor-pointer"
+                  >
+                    Update Greeting
+                  </button>
+                </form>
+              </div>
+            )}
+
             {/* Passcode Updates */}
             {session.role === "admin" && (
               <div className={`rounded-3xl p-4 sm:p-6 ${theme.card} ${theme.shadow} border ${theme.border} space-y-5`}>

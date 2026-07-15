@@ -218,11 +218,12 @@ app.get('/api/settings', (req, res) => {
     autoCycle: getSetting('autoCycle') === 'true',
     hasAdminPassword: !!getSetting('admin_password'),
     hasViewerPassword: !!getSetting('viewer_password'),
+    customGreeting: getSetting('custom_greeting') || '',
   });
 });
 
 app.post('/api/settings', protect, requireAdmin, (req, res) => {
-  const { theme, title, passwordHash, viewerPasswordHash, autoCycle } = req.body;
+  const { theme, title, passwordHash, viewerPasswordHash, autoCycle, customGreeting } = req.body;
 
   if (theme && VALID_THEMES.includes(theme)) setSetting('theme', theme);
   if (title && typeof title === 'string' && title.length <= 100) setSetting('title', title.trim());
@@ -235,12 +236,16 @@ app.post('/api/settings', protect, requireAdmin, (req, res) => {
   if (autoCycle !== undefined) {
     setSetting('autoCycle', String(autoCycle));
   }
+  if (customGreeting !== undefined) {
+    setSetting('custom_greeting', String(customGreeting).trim());
+  }
 
   res.json({ 
     success: true, 
     theme: getSetting('theme'), 
     title: getSetting('title'),
-    autoCycle: getSetting('autoCycle') === 'true'
+    autoCycle: getSetting('autoCycle') === 'true',
+    customGreeting: getSetting('custom_greeting') || '',
   });
 });
 

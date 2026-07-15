@@ -106,6 +106,7 @@ interface CalendarPageProps {
   session: Session;
   onNavigateToSettingsWithDate: (dateStr: string) => void;
   onClickDate?: (dateStr: string) => void;
+  customGreeting?: string;
 }
 
 export default function CalendarPage({
@@ -114,7 +115,8 @@ export default function CalendarPage({
   theme,
   session,
   onNavigateToSettingsWithDate,
-  onClickDate
+  onClickDate,
+  customGreeting
 }: CalendarPageProps) {
   // Current month being viewed on the calendar
   const today = new Date();
@@ -172,12 +174,26 @@ export default function CalendarPage({
   // Smart Weather Forecast State
   const [weather, setWeather] = useState<WeatherInfo | null>(null);
 
-  // Load a beautiful quote from Gemini and current weather on mount
+  // Load a beautiful quote from Gemini based on the latest memory's flower and mood
   useEffect(() => {
     async function loadQuote() {
       setLoadingQuote(true);
       try {
-        const quote = await API.getGeminiQuote("peaceful", "rose");
+        let mood = "peaceful";
+        let flowerName = "rose";
+
+        if (memories.length > 0) {
+          const nonDrafts = [...memories]
+            .filter((m) => !m.isDraft)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          
+          if (nonDrafts.length > 0) {
+            mood = nonDrafts[0].mood || "peaceful";
+            flowerName = FLOWERS[nonDrafts[0].flowerId]?.name || "rose";
+          }
+        }
+
+        const quote = await API.getGeminiQuote(mood, flowerName);
         setPoeticQuote(quote);
       } catch (err) {
         console.error("Failed to load Gemini quote:", err);
@@ -185,6 +201,11 @@ export default function CalendarPage({
         setLoadingQuote(false);
       }
     }
+    loadQuote();
+  }, [memories]);
+
+  // Load current weather on mount
+  useEffect(() => {
     async function loadWeather() {
       try {
         const info = await fetchCurrentWeather();
@@ -193,7 +214,6 @@ export default function CalendarPage({
         console.error("Failed to load weather forecast:", err);
       }
     }
-    loadQuote();
     loadWeather();
   }, []);
 
@@ -313,9 +333,11 @@ export default function CalendarPage({
       name = session.username ? session.username.split(" ")[0] : "love";
     }
 
-    if (hrs < 12) return `Good morning, ${name}`;
-    if (hrs < 17) return `Good afternoon, ${name}`;
-    return `Good evening, ${name}`;
+    if (hrs >= 0 && hrs < 4) return `Good night, ${name}`;
+    if (hrs >= 4 && hrs < 12) return `Good morning, ${name}`;
+    if (hrs >= 12 && hrs < 17) return `Good afternoon, ${name}`;
+    if (hrs >= 17 && hrs < 22) return `Good evening, ${name}`;
+    return `Good night, ${name}`;
   };
 
   // Check if date str has a memory
@@ -534,7 +556,7 @@ export default function CalendarPage({
                   {today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
                 </span>
                 <h3 className={`text-xl font-bold font-sans mt-1 ${theme.textPrimary}`}>
-                  {getGreeting()}
+                  {customGreeting ? customGreeting : getGreeting()}
                 </h3>
               </div>
               {weather && (
