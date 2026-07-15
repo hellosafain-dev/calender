@@ -167,6 +167,16 @@ export const API = {
     return res.json();
   },
 
+  async smartReminder(input: string): Promise<{ title: string; time: string; date: string | null; repeat: string; type: string; suggestion: string }> {
+    const res = await resilientFetch(`${BASE_URL}/api/gemini/smart-reminder`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ input }),
+    });
+    if (!res.ok) throw new Error('Smart reminder failed');
+    return res.json();
+  },
+
   async uploadPhoto(base64File: string, name: string): Promise<{ success: boolean; url: string }> {
     // Compress the image before uploading to avoid Vercel/Express payload limits
     const compressedBase64 = await new Promise<string>((resolve, reject) => {
