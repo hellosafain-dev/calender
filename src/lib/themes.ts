@@ -195,6 +195,7 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockBg: "bg-white/5 border-white/10",
     analogClockGlow: "shadow-[0_0_20px_rgba(255,255,255,0.08)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent",
+    bgImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200",
   },
   rapunzel: {
     name: "Rapunzel's Tower",
