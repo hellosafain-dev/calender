@@ -105,7 +105,95 @@ export default function ClockPage({ reminders, onRefreshReminders, theme }: Cloc
     } catch {}
   };
 
-  // ── AI Smart Reminder ──
+  // ── Smart local parser (no API needed — works offline & when quota exhausted) ──
+  const parseReminderLocally = (input: string) => {
+    const lower = input.toLowerCase();
+
+    // ── Type detection ──
+    let type: Reminder["type"] = "custom";
+    if (/anniversary|annivers/i.test(lower)) type = "anniversary";
+    else if (/birthday|bday|born|birth/i.test(lower)) type = "birthday";
+    else if (/prayer|namaz|salah|salat|fajr|dhuhr|asr|maghrib|isha/i.test(lower)) type = "prayer";
+    else if (/medicine|tablet|pill|capsule|dose|medication|drug/i.test(lower)) type = "medicine";
+
+    // ── Repeat detection ──
+    let repeat: Reminder["repeat"] = "none";
+    if (/every\s*day|daily|each\s*day|morning|night|evening|afternoon/i.test(lower)) repeat = "daily";
+    else if (/every\s*week|weekly|each\s*week/i.test(lower)) repeat = "weekly";
+    else if (/every\s*month|monthly|each\s*month/i.test(lower)) repeat = "monthly";
+    else if (/every\s*year|yearly|annually|annual/i.test(lower)) repeat = "yearly";
+    else if (type === "birthday" || type === "anniversary") repeat = "yearly";
+    else if (type === "prayer" || type === "medicine") repeat = "daily";
+
+    // ── Time detection ──
+    let time = "09:00";
+    const timeMatch = lower.match(/(\d{1,2})\s*:\s*(\d{2})\s*(am|pm)?/i);
+    const hourOnlyMatch = lower.match(/(\d{1,2})\s*(am|pm)/i);
+    if (timeMatch) {
+      let h = parseInt(timeMatch[1]);
+      const m = parseInt(timeMatch[2]);
+      const ampm = timeMatch[3]?.toLowerCase();
+      if (ampm === "pm" && h < 12) h += 12;
+      if (ampm === "am" && h === 12) h = 0;
+      time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    } else if (hourOnlyMatch) {
+      let h = parseInt(hourOnlyMatch[1]);
+      const ampm = hourOnlyMatch[2].toLowerCase();
+      if (ampm === "pm" && h < 12) h += 12;
+      if (ampm === "am" && h === 12) h = 0;
+      time = `${String(h).padStart(2, "0")}:00`;
+    } else if (/morning/i.test(lower)) time = "08:00";
+    else if (/afternoon/i.test(lower)) time = "14:00";
+    else if (/evening/i.test(lower)) time = "18:00";
+    else if (/night/i.test(lower)) time = "21:00";
+    else if (/fajr/i.test(lower)) time = "05:15";
+    else if (/dhuhr|zuhr/i.test(lower)) time = "13:00";
+    else if (/asr/i.test(lower)) time = "16:30";
+    else if (/maghrib/i.test(lower)) time = "19:00";
+    else if (/isha/i.test(lower)) time = "21:00";
+
+    // ── Date detection ──
+    let date: string | null = null;
+    const months = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+    const monthFull = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+    const today = new Date();
+    const dateMatch = lower.match(/(\d{1,2})\s*(st|nd|rd|th)?\s+([a-z]+)|([a-z]+)\s+(\d{1,2})/);
+    if (dateMatch && repeat === "none") {
+      const dayStr = dateMatch[1] || dateMatch[5];
+      const monStr = (dateMatch[3] || dateMatch[4] || "").toLowerCase().slice(0, 3);
+      const monIdx = months.indexOf(monStr) !== -1 ? months.indexOf(monStr) : monthFull.findIndex(m => m.startsWith(monStr));
+      if (dayStr && monIdx !== -1) {
+        const yr = today.getFullYear();
+        date = `${yr}-${String(monIdx + 1).padStart(2,"0")}-${String(parseInt(dayStr)).padStart(2,"0")}`;
+      }
+    }
+
+    // ── Title cleanup ──
+    let title = input
+      .replace(/remind(er)?\s*(me\s*)?(to\s*)?/i, "")
+      .replace(/every\s*(day|week|month|year|morning|night|evening|afternoon)/i, "")
+      .replace(/\d{1,2}\s*:\s*\d{2}\s*(am|pm)?/i, "")
+      .replace(/\d{1,2}\s*(am|pm)/i, "")
+      .replace(/at\s+/i, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!title || title.length < 3) title = input.trim();
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+    if (title.length > 60) title = title.slice(0, 57) + "...";
+
+    // ── Warm suggestion ──
+    const suggestions: Record<string, string> = {
+      anniversary: "Celebrating love is one of the most beautiful things in life 💖",
+      birthday: "Making someone feel special on their birthday means everything 🎂",
+      prayer: "Taking a moment for prayer brings peace and clarity to the day 🙏",
+      medicine: "Staying on top of health is the greatest form of self-care 💊",
+      custom: "Every reminder is a small act of love and care for yourself 🌸",
+    };
+
+    return { title, time, date, repeat, type, suggestion: suggestions[type] };
+  };
+
+  // ── AI Smart Reminder (tries server first, falls back to local parser) ──
   const handleAskAI = async () => {
     if (!aiInput.trim()) return;
     setAiLoading(true);
@@ -115,7 +203,9 @@ export default function ClockPage({ reminders, onRefreshReminders, theme }: Cloc
       const result = await API.smartReminder(aiInput.trim());
       setAiSuggestion(result);
     } catch {
-      setAiError("AI couldn't process that. Please try again or use manual mode.");
+      // Fallback: parse locally so it always works
+      const local = parseReminderLocally(aiInput.trim());
+      setAiSuggestion(local);
     } finally {
       setAiLoading(false);
     }
