@@ -233,4 +233,30 @@ export const API = {
     if (!res.ok) throw new Error('Failed to restore backup');
     return res.json();
   },
+
+  async getVapidPublicKey(): Promise<{ publicKey: string }> {
+    const res = await resilientFetch(`${BASE_URL}/api/push/vapid-public-key`);
+    if (!res.ok) throw new Error('Failed to fetch VAPID key');
+    return res.json();
+  },
+
+  async subscribePush(subscription: any): Promise<{ success: boolean }> {
+    const res = await resilientFetch(`${BASE_URL}/api/push/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription),
+    });
+    if (!res.ok) throw new Error('Failed to subscribe push');
+    return res.json();
+  },
+
+  async unsubscribePush(endpoint: string): Promise<{ success: boolean }> {
+    const res = await resilientFetch(`${BASE_URL}/api/push/unsubscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint }),
+    });
+    if (!res.ok) throw new Error('Failed to unsubscribe push');
+    return res.json();
+  },
 };

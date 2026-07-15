@@ -60,9 +60,18 @@ db.exec(`
     value TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id         TEXT PRIMARY KEY,
+    endpoint   TEXT UNIQUE NOT NULL,
+    p256dh     TEXT NOT NULL,
+    auth       TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_memories_date ON memories(date);
   CREATE INDEX IF NOT EXISTS idx_memories_favorite ON memories(is_favorite);
   CREATE INDEX IF NOT EXISTS idx_reminders_active ON reminders(is_active);
+  CREATE INDEX IF NOT EXISTS idx_push_endpoint ON push_subscriptions(endpoint);
 `);
 
 // ─── Row Converters ───────────────────────────────────────────────────────────
@@ -271,6 +280,16 @@ export const settingQueries = {
   get: db.prepare('SELECT value FROM settings WHERE key = ?'),
   set: db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)'),
   getAll: db.prepare('SELECT key, value FROM settings'),
+};
+
+export const pushSubscriptionQueries = {
+  getAll: db.prepare('SELECT * FROM push_subscriptions'),
+  getByEndpoint: db.prepare('SELECT * FROM push_subscriptions WHERE endpoint = ?'),
+  insert: db.prepare(`
+    INSERT OR IGNORE INTO push_subscriptions (id, endpoint, p256dh, auth, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `),
+  delete: db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?'),
 };
 
 export function getSetting(key: string): string | null {

@@ -19,6 +19,7 @@ import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import webpush from 'web-push';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -27,6 +28,7 @@ dotenv.config();
 import {
   memoryQueries,
   reminderQueries,
+  pushSubscriptionQueries,
   rowToMemory,
   rowToReminder,
   getSetting,
@@ -34,11 +36,58 @@ import {
 } from './src/server/database.js';
 
 import { ThemeType } from './src/types.js';
+import { FLOWERS } from './src/lib/themes.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000');
 const JWT_SECRET = process.env.JWT_SECRET || 'bloom-diary-dev-secret-change-in-production-32chars';
 const IS_PROD = process.env.NODE_ENV === 'production';
+
+// ─── Web Push / VAPID Key Setup ───────────────────────────────────────────────
+let vapidPublicKey = getSetting('vapid_public_key');
+let vapidPrivateKey = getSetting('vapid_private_key');
+
+if (!vapidPublicKey || !vapidPrivateKey) {
+  console.log('Generating VAPID keys for push notifications...');
+  const keys = webpush.generateVAPIDKeys();
+  setSetting('vapid_public_key', keys.publicKey);
+  setSetting('vapid_private_key', keys.privateKey);
+  vapidPublicKey = keys.publicKey;
+  vapidPrivateKey = keys.privateKey;
+}
+
+webpush.setVapidDetails(
+  'mailto:support@bloom-diary.dev',
+  vapidPublicKey!,
+  vapidPrivateKey!
+);
+
+async function sendPushNotification(subscription: any, payload: { title: string; body: string; icon?: string; tag?: string; url?: string }) {
+  try {
+    const pushSub = {
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: subscription.p256dh,
+        auth: subscription.auth
+      }
+    };
+    await webpush.sendNotification(pushSub, JSON.stringify(payload));
+  } catch (err: any) {
+    if (err.statusCode === 410 || err.statusCode === 404) {
+      console.log(`Push subscription expired or invalid (${err.statusCode}). Cleaning up endpoint: ${subscription.endpoint}`);
+      pushSubscriptionQueries.delete.run(subscription.endpoint);
+    } else {
+      console.error('Error sending push notification:', err);
+    }
+  }
+}
+
+function broadcastPushNotification(payload: { title: string; body: string; icon?: string; tag?: string; url?: string }) {
+  const subs = pushSubscriptionQueries.getAll.all() as any[];
+  subs.forEach(sub => {
+    sendPushNotification(sub, payload);
+  });
+}
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(
@@ -246,6 +295,7 @@ app.post('/api/memories', protect, (req, res) => {
     if (targetTheme) {
       setSetting('theme', targetTheme);
     }
+    notifyFlowerUpdate(flowerId, title);
     return res.json({ success: true, memory: rowToMemory(updated), updated: true });
   }
 
@@ -262,6 +312,9 @@ app.post('/api/memories', protect, (req, res) => {
   const created = memoryQueries.getById.get(id) as any;
   if (targetTheme && !isDraft) {
     setSetting('theme', targetTheme);
+  }
+  if (!isDraft) {
+    notifyFlowerUpdate(flowerId, title);
   }
   res.json({ success: true, memory: rowToMemory(created) });
 });
@@ -312,6 +365,10 @@ app.put('/api/memories/:id', protect, (req, res) => {
     setSetting('theme', targetTheme);
   }
 
+  if (!isDraftState) {
+    notifyFlowerUpdate(activeFlowerId, data.title ?? existing.title);
+  }
+
   res.json({ success: true, memory: rowToMemory(updated) });
 });
 
@@ -330,6 +387,42 @@ app.post('/api/memories/:id/toggle-favorite', protect, (req, res) => {
   memoryQueries.toggleFavorite.run(new Date().toISOString(), id);
   const updated = memoryQueries.getById.get(id) as any;
   res.json({ success: true, isFavorite: Boolean(updated.is_favorite) });
+});
+
+// ── Web Push Subscriptions ───────────────────────────────────────────────────
+app.get('/api/push/vapid-public-key', (_req, res) => {
+  res.json({ publicKey: getSetting('vapid_public_key') });
+});
+
+app.post('/api/push/subscribe', (req, res) => {
+  const { endpoint, keys } = req.body;
+  if (!endpoint || !keys?.p256dh || !keys?.auth) {
+    return res.status(400).json({ error: 'Endpoint and keys (p256dh, auth) are required' });
+  }
+
+  const id = generateId('sub');
+  try {
+    pushSubscriptionQueries.insert.run(id, endpoint, keys.p256dh, keys.auth, new Date().toISOString());
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('Subscription error:', err);
+    res.status(500).json({ error: 'Failed to save subscription' });
+  }
+});
+
+app.post('/api/push/unsubscribe', (req, res) => {
+  const { endpoint } = req.body;
+  if (!endpoint) {
+    return res.status(400).json({ error: 'Endpoint is required' });
+  }
+
+  try {
+    pushSubscriptionQueries.delete.run(endpoint);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('Unsubscribe error:', err);
+    res.status(500).json({ error: 'Failed to delete subscription' });
+  }
 });
 
 // ── Reminders ─────────────────────────────────────────────────────────────────
@@ -606,6 +699,83 @@ app.post('/api/upload', protect, upload.single('photo'), (req: any, res) => {
   const fileUrl = `/uploads/${req.file.filename}`;
   res.json({ success: true, url: fileUrl });
 });
+
+function notifyFlowerUpdate(flowerId: string, title: string) {
+  try {
+    const flower = FLOWERS[flowerId];
+    const flowerName = flower ? flower.name : 'a new flower';
+    broadcastPushNotification({
+      title: 'New Flower Planted! 🌸',
+      body: `"${title}" has been added as a ${flowerName} to the Sanctuary.`,
+      tag: `flower-update-${Date.now()}`,
+      url: '/'
+    });
+  } catch (err) {
+    console.error('Error notifying flower update:', err);
+  }
+}
+
+// ─── Active Alarms Background Scheduler ───────────────────────────────────────
+const triggeredReminders: Record<string, string> = {};
+
+function checkRemindersAndPush() {
+  try {
+    const now = new Date();
+    const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const localYear = now.getFullYear();
+    const localMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const localDay = String(now.getDate()).padStart(2, '0');
+    const currentYYYYMMDD = `${localYear}-${localMonth}-${localDay}`;
+    const timeKey = `${currentYYYYMMDD}-${currentHHMM}`;
+
+    const activeReminders = reminderQueries.getAll.all() as any[];
+
+    activeReminders.forEach((r) => {
+      if (!r.is_active) return;
+      if (r.time !== currentHHMM) return;
+      
+      // Skip if already triggered for this exact minute
+      if (triggeredReminders[r.id] === timeKey) return;
+
+      let isMatched = false;
+      const baseDate = new Date(r.date || r.created_at);
+
+      if (r.repeat === 'none') {
+        if (r.date) {
+          isMatched = r.date === currentYYYYMMDD;
+        } else {
+          isMatched = true;
+        }
+      } else if (r.repeat === 'daily') {
+        isMatched = true;
+      } else if (r.repeat === 'weekly') {
+        isMatched = now.getDay() === baseDate.getDay();
+      } else if (r.repeat === 'monthly') {
+        isMatched = now.getDate() === baseDate.getDate();
+      } else if (r.repeat === 'yearly') {
+        isMatched = now.getMonth() === baseDate.getMonth() && now.getDate() === baseDate.getDate();
+      }
+
+      if (isMatched) {
+        triggeredReminders[r.id] = timeKey;
+        const cleanTitle = r.title.split('|')[0].trim();
+        const typeLabel = r.type.charAt(0).toUpperCase() + r.type.slice(1);
+        
+        broadcastPushNotification({
+          title: cleanTitle,
+          body: `Time for your ${typeLabel} reminder!`,
+          tag: `reminder-${r.id}`,
+          url: '/?tab=2'
+        });
+      }
+    });
+  } catch (err) {
+    console.error('Error running checkRemindersAndPush background scheduler:', err);
+  }
+}
+
+// Check every 10 seconds for high precision
+setInterval(checkRemindersAndPush, 10000);
 
 // ─── Frontend Serving ─────────────────────────────────────────────────────────
 async function startServer() {
