@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Memory, Reminder, ThemeType } from "./types.js";
 import { THEMES } from "./lib/themes.js";
 import { API, getSession, clearSession, Session } from "./lib/api.js";
@@ -507,6 +508,7 @@ export default function App() {
       </AnimatePresence>
     </div>
       </ErrorBoundary>
+      <SpeedInsights />
     </QueryClientProvider>
   );
 }
