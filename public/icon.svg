@@ -1,0 +1,24 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Calendar Body (White with dark gray border) -->
+  <rect x="56" y="96" width="400" height="360" rx="60" fill="#FFFFFF" stroke="#404040" stroke-width="32" />
+  
+  <!-- Calendar Header (Teal with dark gray border on top and sides, flat on bottom) -->
+  <path d="M 56 156 A 60 60 0 0 1 116 96 L 396 96 A 60 60 0 0 1 456 156 L 456 200 L 56 200 Z" fill="#2BAAA1" />
+  
+  <!-- The stroke for the header is already drawn by the body's stroke, 
+       but we need to draw the line separating the header and the body -->
+  <line x1="56" y1="200" x2="456" y2="200" stroke="#404040" stroke-width="32" />
+
+  <!-- Binder Rings -->
+  <!-- Left Ring -->
+  <rect x="146" y="48" width="32" height="80" rx="16" fill="#404040" />
+  <!-- Right Ring -->
+  <rect x="334" y="48" width="32" height="80" rx="16" fill="#404040" />
+
+  <!-- Text "JUL" -->
+  <text x="256" y="165" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="64" fill="#FFFFFF" text-anchor="middle" alignment-baseline="central">JUL</text>
+
+  <!-- Text "18" -->
+  <text x="256" y="360" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="200" fill="#404040" text-anchor="middle" alignment-baseline="central" letter-spacing="-10">18</text>
+</svg>
