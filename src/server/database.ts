@@ -60,9 +60,61 @@ db.exec(`
     value TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS habits (
+    id              TEXT PRIMARY KEY,
+    title           TEXT NOT NULL,
+    flower_id       TEXT NOT NULL,
+    frequency       TEXT NOT NULL,
+    completed_dates TEXT NOT NULL DEFAULT '[]',
+    streak          INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS goals (
+    id           TEXT PRIMARY KEY,
+    title        TEXT NOT NULL,
+    description  TEXT,
+    deadline     TEXT,
+    category     TEXT NOT NULL,
+    progress     INTEGER NOT NULL DEFAULT 0,
+    is_completed INTEGER NOT NULL DEFAULT 0,
+    created_at   TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS planner_tasks (
+    id           TEXT PRIMARY KEY,
+    title        TEXT NOT NULL,
+    period       TEXT NOT NULL,
+    order_index  INTEGER NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0,
+    date         TEXT NOT NULL,
+    created_at   TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS journal_entries (
+    id         TEXT PRIMARY KEY,
+    date       TEXT NOT NULL,
+    prompt     TEXT,
+    content    TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS notes (
+    id         TEXT PRIMARY KEY,
+    title      TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    folder     TEXT NOT NULL DEFAULT 'Personal',
+    is_pinned  INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_memories_date ON memories(date);
   CREATE INDEX IF NOT EXISTS idx_memories_favorite ON memories(is_favorite);
   CREATE INDEX IF NOT EXISTS idx_reminders_active ON reminders(is_active);
+  CREATE INDEX IF NOT EXISTS idx_planner_tasks_date ON planner_tasks(date);
+  CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(date);
 `);
 
 // ─── Row Converters ───────────────────────────────────────────────────────────
@@ -281,5 +333,46 @@ export function getSetting(key: string): string | null {
 export function setSetting(key: string, value: string): void {
   settingQueries.set.run(key, value);
 }
+
+export const habitQueries = {
+  getAll: db.prepare('SELECT * FROM habits ORDER BY created_at ASC'),
+  getById: db.prepare('SELECT * FROM habits WHERE id = ?'),
+  insert: db.prepare('INSERT INTO habits (id, title, flower_id, frequency, completed_dates, streak, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'),
+  update: db.prepare('UPDATE habits SET title=?, flower_id=?, frequency=?, completed_dates=?, streak=? WHERE id=?'),
+  delete: db.prepare('DELETE FROM habits WHERE id = ?'),
+};
+
+export const goalQueries = {
+  getAll: db.prepare('SELECT * FROM goals ORDER BY created_at ASC'),
+  getById: db.prepare('SELECT * FROM goals WHERE id = ?'),
+  insert: db.prepare('INSERT INTO goals (id, title, description, deadline, category, progress, is_completed, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'),
+  update: db.prepare('UPDATE goals SET title=?, description=?, deadline=?, category=?, progress=?, is_completed=? WHERE id=?'),
+  delete: db.prepare('DELETE FROM goals WHERE id = ?'),
+};
+
+export const plannerQueries = {
+  getAll: db.prepare('SELECT * FROM planner_tasks ORDER BY order_index ASC'),
+  getByDate: db.prepare('SELECT * FROM planner_tasks WHERE date = ? ORDER BY order_index ASC'),
+  getById: db.prepare('SELECT * FROM planner_tasks WHERE id = ?'),
+  insert: db.prepare('INSERT INTO planner_tasks (id, title, period, order_index, is_completed, date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'),
+  update: db.prepare('UPDATE planner_tasks SET title=?, period=?, order_index=?, is_completed=?, date=? WHERE id=?'),
+  delete: db.prepare('DELETE FROM planner_tasks WHERE id = ?'),
+};
+
+export const journalQueries = {
+  getAll: db.prepare('SELECT * FROM journal_entries ORDER BY date DESC'),
+  getById: db.prepare('SELECT * FROM journal_entries WHERE id = ?'),
+  insert: db.prepare('INSERT INTO journal_entries (id, date, prompt, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'),
+  update: db.prepare('UPDATE journal_entries SET date=?, prompt=?, content=?, updated_at=? WHERE id=?'),
+  delete: db.prepare('DELETE FROM journal_entries WHERE id = ?'),
+};
+
+export const noteQueries = {
+  getAll: db.prepare('SELECT * FROM notes ORDER BY updated_at DESC'),
+  getById: db.prepare('SELECT * FROM notes WHERE id = ?'),
+  insert: db.prepare('INSERT INTO notes (id, title, content, folder, is_pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'),
+  update: db.prepare('UPDATE notes SET title=?, content=?, folder=?, is_pinned=?, updated_at=? WHERE id=?'),
+  delete: db.prepare('DELETE FROM notes WHERE id = ?'),
+};
 
 export default db;

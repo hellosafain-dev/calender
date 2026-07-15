@@ -27,6 +27,11 @@ dotenv.config();
 import {
   memoryQueries,
   reminderQueries,
+  habitQueries,
+  goalQueries,
+  plannerQueries,
+  journalQueries,
+  noteQueries,
   rowToMemory,
   rowToReminder,
   getSetting,
@@ -382,6 +387,124 @@ app.delete('/api/reminders/:id', protect, (req, res) => {
   const existing = reminderQueries.getById.get(id);
   if (!existing) return res.status(404).json({ error: 'Reminder not found' });
   reminderQueries.delete.run(id);
+  res.json({ success: true });
+});
+
+// ── Habits ────────────────────────────────────────────────────────────────────
+app.get('/api/habits', protect, (req, res) => {
+  const rows = habitQueries.getAll.all();
+  res.json(rows.map((r: any) => ({ ...r, completedDates: JSON.parse(r.completed_dates || '[]'), flowerId: r.flower_id })));
+});
+app.post('/api/habits', protect, (req, res) => {
+  const { title, flowerId, frequency } = req.body;
+  const id = generateId('hab');
+  const now = new Date().toISOString();
+  habitQueries.insert.run(id, title, flowerId, frequency, '[]', 0, now);
+  const created = habitQueries.getById.get(id) as any;
+  res.json({ success: true, habit: { ...created, completedDates: JSON.parse(created.completed_dates || '[]'), flowerId: created.flower_id } });
+});
+app.put('/api/habits', protect, (req, res) => {
+  const { id, title, flowerId, frequency, completedDates, streak } = req.body;
+  habitQueries.update.run(title, flowerId, frequency, JSON.stringify(completedDates), streak, id);
+  res.json({ success: true });
+});
+app.delete('/api/habits', protect, (req, res) => {
+  habitQueries.delete.run(req.query.id as string);
+  res.json({ success: true });
+});
+
+// ── Goals ─────────────────────────────────────────────────────────────────────
+app.get('/api/goals', protect, (req, res) => {
+  const rows = goalQueries.getAll.all();
+  res.json(rows.map((r: any) => ({ ...r, isCompleted: Boolean(r.is_completed) })));
+});
+app.post('/api/goals', protect, (req, res) => {
+  const { title, description, deadline, category } = req.body;
+  const id = generateId('gol');
+  const now = new Date().toISOString();
+  goalQueries.insert.run(id, title, description || null, deadline || null, category, 0, 0, now);
+  const created = goalQueries.getById.get(id) as any;
+  res.json({ success: true, goal: { ...created, isCompleted: Boolean(created.is_completed) } });
+});
+app.put('/api/goals', protect, (req, res) => {
+  const { id, title, description, deadline, category, progress, isCompleted } = req.body;
+  goalQueries.update.run(title, description || null, deadline || null, category, progress, isCompleted ? 1 : 0, id);
+  res.json({ success: true });
+});
+app.delete('/api/goals', protect, (req, res) => {
+  goalQueries.delete.run(req.query.id as string);
+  res.json({ success: true });
+});
+
+// ── Planner ───────────────────────────────────────────────────────────────────
+app.get('/api/planner', protect, (req, res) => {
+  const date = req.query.date as string;
+  const rows = date ? plannerQueries.getByDate.all(date) : plannerQueries.getAll.all();
+  res.json(rows.map((r: any) => ({ ...r, orderIndex: r.order_index, isCompleted: Boolean(r.is_completed) })));
+});
+app.post('/api/planner', protect, (req, res) => {
+  const { title, period, orderIndex, date } = req.body;
+  const id = generateId('pln');
+  const now = new Date().toISOString();
+  plannerQueries.insert.run(id, title, period, orderIndex, 0, date, now);
+  const created = plannerQueries.getById.get(id) as any;
+  res.json({ success: true, task: { ...created, orderIndex: created.order_index, isCompleted: Boolean(created.is_completed) } });
+});
+app.put('/api/planner', protect, (req, res) => {
+  const { id, title, period, orderIndex, isCompleted, date } = req.body;
+  plannerQueries.update.run(title, period, orderIndex, isCompleted ? 1 : 0, date, id);
+  res.json({ success: true });
+});
+app.delete('/api/planner', protect, (req, res) => {
+  plannerQueries.delete.run(req.query.id as string);
+  res.json({ success: true });
+});
+
+// ── Journal ───────────────────────────────────────────────────────────────────
+app.get('/api/journal', protect, (req, res) => {
+  const rows = journalQueries.getAll.all();
+  res.json(rows);
+});
+app.post('/api/journal', protect, (req, res) => {
+  const { date, prompt, content } = req.body;
+  const id = generateId('jrn');
+  const now = new Date().toISOString();
+  journalQueries.insert.run(id, date, prompt || null, content, now, now);
+  const created = journalQueries.getById.get(id);
+  res.json({ success: true, entry: created });
+});
+app.put('/api/journal', protect, (req, res) => {
+  const { id, date, prompt, content } = req.body;
+  const now = new Date().toISOString();
+  journalQueries.update.run(date, prompt || null, content, now, id);
+  res.json({ success: true });
+});
+app.delete('/api/journal', protect, (req, res) => {
+  journalQueries.delete.run(req.query.id as string);
+  res.json({ success: true });
+});
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+app.get('/api/notes', protect, (req, res) => {
+  const rows = noteQueries.getAll.all();
+  res.json(rows.map((r: any) => ({ ...r, isPinned: Boolean(r.is_pinned) })));
+});
+app.post('/api/notes', protect, (req, res) => {
+  const { title, content, folder, isPinned } = req.body;
+  const id = generateId('not');
+  const now = new Date().toISOString();
+  noteQueries.insert.run(id, title, content, folder || 'Personal', isPinned ? 1 : 0, now, now);
+  const created = noteQueries.getById.get(id) as any;
+  res.json({ success: true, note: { ...created, isPinned: Boolean(created.is_pinned) } });
+});
+app.put('/api/notes', protect, (req, res) => {
+  const { id, title, content, folder, isPinned } = req.body;
+  const now = new Date().toISOString();
+  noteQueries.update.run(title, content, folder, isPinned ? 1 : 0, now, id);
+  res.json({ success: true });
+});
+app.delete('/api/notes', protect, (req, res) => {
+  noteQueries.delete.run(req.query.id as string);
   res.json({ success: true });
 });
 
