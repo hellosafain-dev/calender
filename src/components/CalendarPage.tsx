@@ -772,7 +772,7 @@ export default function CalendarPage({
               )}
 
               {/* Memory Details - Scrollable */}
-              <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+              <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 max-h-[45dvh] sm:max-h-[40dvh]">
                 {/* Flower Badge & Date Row */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
