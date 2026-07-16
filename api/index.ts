@@ -358,12 +358,22 @@ Provide an ultra-short poetic quote (max 15 words) and a matching romantic senti
         privateKey
       );
 
+      const { data: tzSetting } = await supabase.from('settings').select('value').eq('key', 'timezone').single();
+      const timeZone = tzSetting?.value || 'Asia/Kolkata';
+
       const now = new Date();
-      const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const localYear = now.getFullYear();
-      const localMonth = String(now.getMonth() + 1).padStart(2, '0');
-      const localDay = String(now.getDate()).padStart(2, '0');
-      const currentYYYYMMDD = `${localYear}-${localMonth}-${localDay}`;
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        hourCycle: 'h23',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      });
+      const parts = formatter.formatToParts(now);
+      const p: Record<string, string> = {};
+      parts.forEach(part => { p[part.type] = part.value; });
+      
+      const currentHHMM = `${p.hour}:${p.minute}`;
+      const currentYYYYMMDD = `${p.year}-${p.month}-${p.day}`;
 
       try {
         const { data: reminders, error: fetchError } = await supabase
