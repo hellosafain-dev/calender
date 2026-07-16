@@ -18,6 +18,8 @@ import ErrorBoundary from "./components/ErrorBoundary.js";
 import { useMemories, useReminders, useSettings, useUpdateSettings } from "./lib/hooks.js";
 import { Flower, ShieldAlert, Heart, Award, Compass, Pill, Activity, Mail } from "lucide-react";
 import GlowingLanterns from "./components/GlowingLanterns.js";
+import AlarmOverlay from "./components/AlarmOverlay.js";
+import BirthdayCountdown from "./components/BirthdayCountdown.js";
 import BirthdaySurprise from "./components/BirthdaySurprise.js";
 
 // ─── Constants & Alarm Utils ───────────────────────────────────────────────
@@ -160,19 +162,23 @@ export default function App() {
 
   // Check if today is the special birthday window (July 17, 23:59:00 to July 18, 23:59:59)
   // or if simulate_birthday=true query param is set
+  const getBdayStart = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), 6, 17, 23, 59, 0).getTime();
+  };
+
   const checkIsBirthday = () => {
     const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
     if (isSimulated) return true;
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const bdayStart = new Date(currentYear, 6, 17, 23, 59, 0).getTime();
-    const bdayEnd = new Date(currentYear, 6, 18, 23, 59, 59).getTime();
-    const nowTime = now.getTime();
+    const bdayStart = getBdayStart();
+    const bdayEnd = new Date(new Date().getFullYear(), 6, 18, 23, 59, 59).getTime();
+    const nowTime = Date.now();
     return nowTime >= bdayStart && nowTime <= bdayEnd;
   };
 
   const isBirthday = checkIsBirthday();
+  const bdayStartMs = getBdayStart();
 
   const [letterRead, setLetterRead] = useState(() => {
     const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
@@ -499,6 +505,24 @@ export default function App() {
       {/* Rapunzel Birthday Glowing Lanterns background overlay */}
       {isBirthday && <GlowingLanterns />}
 
+      {/* Live 10-Minute Birthday Countdown */}
+      {!isBirthday && !letterRead && (
+        <BirthdayCountdown 
+          targetTimeMs={bdayStartMs} 
+          onUnlock={() => {
+            // Force re-evaluation of isBirthday by adding simulate_birthday to URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('simulate_birthday', 'true');
+            window.history.replaceState({}, '', url);
+            // This will trigger a re-render as checkIsBirthday() reads the URL
+            window.dispatchEvent(new Event('popstate')); 
+            // Alternatively, since window.location changes won't immediately trigger state,
+            // we can just reload for the ultimate dramatic effect or use a state.
+            window.location.reload();
+          }} 
+        />
+      )}
+
       {/* Birthday Surprise Cinematic overlay */}
       {isBirthday && !letterRead && (
         <BirthdaySurprise onClose={() => { setLetterRead(true); localStorage.setItem("bloom_birthday_letter_read", "true"); }} />
@@ -588,96 +612,33 @@ export default function App() {
         theme={currentTheme}
       />
 
-      {/* Real-time Triggered Reminder Modal */}
-      <AnimatePresence>
-        {activeTriggeredReminder && (
-          <motion.div
-            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl"
-          >
-            <motion.div
-              initial={{ scale:0.8, y:60 }} animate={{ scale:1, y:0 }} exit={{ scale:0.8, y:60 }}
-              transition={{ type:"spring", stiffness:320, damping:26 }}
-              className="w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl"
-              style={{ background:"linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95)" }}
-            >
-              <div className="relative flex flex-col items-center pt-10 pb-6 px-6 text-center space-y-5">
-                <motion.div
-                  animate={{ scale:[1, 1.15, 1] }}
-                  transition={{ duration:1.2, repeat:Infinity, ease:"easeInOut" }}
-                  className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shadow-2xl"
-                >
-                  {getReminderIcon(activeTriggeredReminder.type, "w-10 h-10 text-white")}
-                </motion.div>
-
-                {/* Pulse rings */}
-                <div className="absolute top-10 left-1/2 -translate-x-1/2">
-                  {[1,2,3].map(i => (
-                    <motion.div key={i}
-                      animate={{ scale:[1, 2.5+i*0.3], opacity:[0.5, 0] }}
-                      transition={{ duration:2, repeat:Infinity, delay:i*0.4, ease:"easeOut" }}
-                      className="absolute w-24 h-24 rounded-full border-2 border-pink-400/40 -translate-x-1/2 -translate-y-0" />
-                  ))}
-                </div>
-
-                <div>
-                  <p className="text-xs text-violet-300 font-bold uppercase tracking-widest mb-1">
-                    {TYPE_META[activeTriggeredReminder.type]?.label || 'General'} Reminder
-                  </p>
-                  {(() => {
-                    const parts = activeTriggeredReminder.title.split("|");
-                    const mainTitle = parts[0].trim();
-                    const loveNote = parts[1]?.trim();
-                    return (
-                      <>
-                        <h2 className="text-2xl font-black text-white tracking-tight">{mainTitle}</h2>
-                        {loveNote && (
-                          <div className="mt-3 p-4 rounded-2xl bg-white/5 border border-amber-400/20 text-left relative overflow-hidden shadow-inner max-h-36 overflow-y-auto">
-                            <div className="absolute top-2 right-3 text-[8px] font-black uppercase text-amber-400 tracking-widest animate-pulse flex items-center gap-1">
-                              <Mail className="w-2.5 h-2.5" /> Note
-                            </div>
-                            <p className="text-amber-200 text-xs italic leading-relaxed mt-1">"{loveNote}"</p>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                  <p className="text-violet-300/70 text-xs mt-1.5">{activeTriggeredReminder.time}</p>
-                </div>
-
-                <div className="flex gap-3 w-full">
-                  <button onClick={() => {
-                    if (activeAlarmStop) activeAlarmStop();
-                    setActiveAlarmStop(null);
-                    
-                    const snoozeTime = new Date(Date.now() + 5 * 60 * 1000);
-                    const snoozeHHMM = `${String(snoozeTime.getHours()).padStart(2, "0")}:${String(snoozeTime.getMinutes()).padStart(2, "0")}`;
-                    API.createReminder({
-                      title: `${activeTriggeredReminder.title.split('|')[0].trim()} (Snoozed 5m)`,
-                      time: snoozeHHMM,
-                      repeat: "none",
-                      type: activeTriggeredReminder.type
-                    }).catch(() => {});
-                    
-                    setActiveTriggeredReminder(null);
-                  }}
-                    className="flex-1 py-3 rounded-2xl bg-white/10 border border-white/15 text-white text-xs font-black active:scale-95 transition-transform cursor-pointer">
-                    Snooze
-                  </button>
-                  <button onClick={() => {
-                    if (activeAlarmStop) activeAlarmStop();
-                    setActiveAlarmStop(null);
-                    setActiveTriggeredReminder(null);
-                  }}
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-black shadow-lg active:scale-95 transition-transform cursor-pointer">
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AlarmOverlay
+        reminder={activeTriggeredReminder}
+        onDismiss={() => {
+          if (activeAlarmStop) activeAlarmStop();
+          setActiveAlarmStop(null);
+          setActiveTriggeredReminder(null);
+        }}
+        onSnooze={() => {
+          if (activeAlarmStop) activeAlarmStop();
+          setActiveAlarmStop(null);
+          
+          if (activeTriggeredReminder) {
+            const snoozeTime = new Date(Date.now() + 5 * 60 * 1000);
+            const snoozeHHMM = `${String(snoozeTime.getHours()).padStart(2, "0")}:${String(snoozeTime.getMinutes()).padStart(2, "0")}`;
+            API.createReminder({
+              title: `${activeTriggeredReminder.title.split('|')[0].trim()} (Snoozed 5m)`,
+              time: snoozeHHMM,
+              repeat: "none",
+              type: activeTriggeredReminder.type
+            }).catch(() => {});
+          }
+          
+          setActiveTriggeredReminder(null);
+        }}
+        typeMetaLabel={activeTriggeredReminder ? (TYPE_META[activeTriggeredReminder.type]?.label || 'General') : ''}
+        getIcon={(className) => activeTriggeredReminder ? getReminderIcon(activeTriggeredReminder.type, className) : null}
+      />
     </div>
       </ErrorBoundary>
   );
