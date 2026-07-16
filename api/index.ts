@@ -6,6 +6,70 @@ import { GoogleGenAI, Type } from '@google/genai';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import webpush from 'web-push';
+import sharp from 'sharp';
+
+// Helper to convert base64 photos to cloud urls
+async function processAndUploadPhotos(photos: string[]): Promise<string[]> {
+  if (!photos || !Array.isArray(photos)) return [];
+  const processedUrls: string[] = [];
+  
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+    if (typeof photo !== 'string') continue;
+    
+    // If it's already a URL, keep it
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      processedUrls.push(photo);
+      continue;
+    }
+    
+    // If it's a base64 string, process and upload it
+    if (photo.startsWith('data:image/')) {
+      try {
+        const matches = photo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+          processedUrls.push(photo);
+          continue;
+        }
+        const buffer = Buffer.from(matches[2], 'base64');
+        
+        // Compress and resize
+        const optimizedBuffer = await sharp(buffer)
+          .resize(2000, 2000, { fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+          
+        const fileName = `mem_${Date.now()}_${i}_${Math.floor(Math.random()*1000)}.webp`;
+        
+        const { error } = await supabase.storage
+          .from('memories')
+          .upload(fileName, optimizedBuffer, {
+            contentType: 'image/webp',
+            upsert: false
+          });
+          
+        if (error) {
+          console.error("Storage upload error:", error);
+          processedUrls.push(photo); // fallback to raw base64
+          continue;
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('memories')
+          .getPublicUrl(fileName);
+          
+        processedUrls.push(publicUrlData.publicUrl);
+      } catch (err) {
+        console.error("Sharp/Upload error:", err);
+        processedUrls.push(photo); // fallback to raw base64
+      }
+    } else {
+      processedUrls.push(photo);
+    }
+  }
+  
+  return processedUrls;
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'bloom-diary-dev-secret-change-in-production-32chars';
 
@@ -516,9 +580,10 @@ Provide an ultra-short poetic quote (max 15 words) and a matching romantic senti
         const targetTheme = flowerToThemeMap[flowerId];
 
         if (existing && !isDraft) {
+          const finalPhotos = photos ? await processAndUploadPhotos(photos) : existing.photos;
           const { data: updated, error } = await supabase
             .from('memories')
-            .update({ title, note, flower_id: flowerId, mood, weather, music, tags: tags || [], photos: photos || existing.photos, updated_at: new Date().toISOString() })
+            .update({ title, note, flower_id: flowerId, mood, weather, music, tags: tags || [], photos: finalPhotos, updated_at: new Date().toISOString() })
             .eq('id', existing.id)
             .select()
             .single();
@@ -545,7 +610,7 @@ Provide an ultra-short poetic quote (max 15 words) and a matching romantic senti
             weather: weather || null,
             music: music || null,
             tags: tags || [],
-            photos: photos || [],
+            photos: photos ? await processAndUploadPhotos(photos) : [],
             is_favorite: false,
             is_draft: !!isDraft,
             created_at: now,
@@ -602,7 +667,7 @@ Provide an ultra-short poetic quote (max 15 words) and a matching romantic senti
             weather: weather ?? existing.weather,
             music: music ?? existing.music,
             tags: tags ?? existing.tags,
-            photos: photos ?? existing.photos,
+            photos: photos ? await processAndUploadPhotos(photos) : existing.photos,
             is_draft: isDraft !== undefined ? isDraft : existing.is_draft,
             is_favorite: isFavorite !== undefined ? isFavorite : existing.is_favorite,
             updated_at: new Date().toISOString(),

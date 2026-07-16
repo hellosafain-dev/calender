@@ -616,6 +616,8 @@ export default function CalendarPage({
                       src={todayMemory.photos[0]}
                       alt="Today"
                       referrerPolicy="no-referrer"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 flex items-center gap-1.5 shadow">
@@ -686,6 +688,8 @@ export default function CalendarPage({
                     src={selectedMemory.photos[activePhotoIndex]}
                     alt={selectedMemory.title}
                     referrerPolicy="no-referrer"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain mx-auto"
                     drag={selectedMemory.photos.length > 1 ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}

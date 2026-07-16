@@ -460,6 +460,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                     src={activeMemory.photos[photoIndex] || getUnsplashFlowerUrl(activeMemory.flowerId)}
                     alt={activeMemory.title}
                     loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-contain mx-auto pointer-events-auto cursor-grab active:cursor-grabbing"
                     style={{ willChange: "transform" }}
