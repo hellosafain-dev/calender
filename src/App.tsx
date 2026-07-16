@@ -41,7 +41,7 @@ const getReminderIcon = (type: string, className = "w-5 h-5") => {
   }
 };
 
-function playMelodiousAlarm(loops = 3) {
+function playMelodiousAlarm(loops = 1) {
   try {
     const Ctx = window.AudioContext || (window as any).webkitAudioContext;
     if (!Ctx) return () => {};
@@ -206,6 +206,8 @@ export default function App() {
   // Background check for active reminders
   useEffect(() => {
     const checkActiveReminders = () => {
+      if (loading) return; // Prevent alarms from playing while the app is still loading (avoids ghost sounds on black screen)
+      
       const now = new Date();
       const currentHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       
@@ -243,7 +245,7 @@ export default function App() {
         }
 
         if (isMatched) {
-          const stopAudio = playMelodiousAlarm(4);
+          const stopAudio = playMelodiousAlarm(1);
           setActiveAlarmStop(() => stopAudio);
           setActiveTriggeredReminder(reminder);
           setTriggeredToday(prev => ({ ...prev, [reminder.id]: timeKey }));
@@ -263,7 +265,7 @@ export default function App() {
     checkActiveReminders();
 
     return () => clearInterval(interval);
-  }, [reminders, triggeredToday]);
+  }, [reminders, triggeredToday, loading]);
 
   useEffect(() => {
     if (sData) {
