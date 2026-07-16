@@ -521,9 +521,9 @@ export default function SettingsPage({
 
           <button
             onClick={async () => {
-              const success = await requestAndInitPushNotifications();
-              if (success) setToastMessage({ text: "Push notifications successfully enabled!" });
-              else setToastMessage({ text: "Please allow notifications in browser settings.", isError: true });
+              const res = await requestAndInitPushNotifications();
+              if (res.success) setToastMessage({ text: "Push notifications successfully enabled!" });
+              else setToastMessage({ text: res.error || "Please allow notifications in browser settings.", isError: true });
             }}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-black transition-all active:scale-95 text-pink-400"
           >

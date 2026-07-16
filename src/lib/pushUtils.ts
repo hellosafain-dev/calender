@@ -15,10 +15,10 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export async function requestAndInitPushNotifications(): Promise<boolean> {
+export async function requestAndInitPushNotifications(): Promise<{ success: boolean; error?: string }> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.log('Push notifications not supported on this browser/device.');
-    return false;
+    return { success: false, error: 'Push notifications are not supported on your browser or device.' };
   }
 
   try {
@@ -30,14 +30,21 @@ export async function requestAndInitPushNotifications(): Promise<boolean> {
     
     if (permission !== 'granted') {
       console.log('Notification permission not granted.');
-      return false;
+      return { success: false, error: 'You must grant notification permissions in your browser settings.' };
     }
 
-    const registration = await navigator.serviceWorker.ready;
+    let registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) {
+      console.log('No service worker registered. Registering /sw.js...');
+      registration = await navigator.serviceWorker.register('/sw.js');
+    }
+    
+    // Ensure it's ready
+    registration = await navigator.serviceWorker.ready;
     
     // Get public VAPID key from backend
-    const { publicKey } = await API.getVapidPublicKey();
-    const convertedVapidKey = urlBase64ToUint8Array(publicKey);
+    const vapidRes = await API.getVapidPublicKey().catch(e => { throw new Error(`VAPID Key Error: ${e.message}`); });
+    const convertedVapidKey = urlBase64ToUint8Array(vapidRes.publicKey);
 
     // Subscribe browser to Web Push
     let subscription = await registration.pushManager.getSubscription();
@@ -45,7 +52,7 @@ export async function requestAndInitPushNotifications(): Promise<boolean> {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: convertedVapidKey
-      });
+      }).catch(e => { throw new Error(`Push Subscribe Error: ${e.message}`); });
     }
 
     // Send subscription info to backend to register device
@@ -57,13 +64,13 @@ export async function requestAndInitPushNotifications(): Promise<boolean> {
           p256dh: subJSON.keys.p256dh,
           auth: subJSON.keys.auth
         }
-      });
+      }).catch(e => { throw new Error(`Backend Sync Error: ${e.message}`); });
       console.log('Successfully registered device for background push notifications!');
-      return true;
+      return { success: true };
     }
-    return false;
-  } catch (err) {
+    return { success: false, error: 'Failed to generate a valid push subscription payload.' };
+  } catch (err: any) {
     console.error('Failed to initialize push notifications:', err);
-    return false;
+    return { success: false, error: err.message || 'An unknown error occurred during subscription.' };
   }
 }
