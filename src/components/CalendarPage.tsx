@@ -660,11 +660,10 @@ export default function CalendarPage({
         {selectedMemory && (
           <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-2xl" onClick={() => setSelectedMemory(null)}>
             <motion.div
-              layoutId={selectedMemory.id === todayMemory?.id ? `memory-card-${selectedMemory.id}` : undefined}
-              initial={{ opacity: 0, y: 60, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 60, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               onClick={e => e.stopPropagation()}
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}

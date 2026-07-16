@@ -432,11 +432,10 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
             {/* Card — Apple-style bottom sheet on mobile, centered on desktop */}
             <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
               <motion.div
-                layoutId={`watch-icon-${activeMemory.id}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={0.25}
