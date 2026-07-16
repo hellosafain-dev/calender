@@ -10,7 +10,15 @@ self.addEventListener('push', (event) => {
       icon: data.icon || '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
       tag: data.tag || 'garden-update',
-      requireInteraction: data.requireInteraction || false,
+      // Aggressive alarm vibration pattern
+      vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 40, 450, 110, 200, 110, 170, 40, 500],
+      requireInteraction: true, // Forces it to stay on screen until dismissed
+      renotify: true, // Forces sound/vibration even if old notification is still there
+      silent: false,
+      actions: [
+        { action: 'open', title: 'Open App' },
+        { action: 'dismiss', title: 'Dismiss' }
+      ],
       data: {
         url: data.url || '/'
       }
@@ -33,6 +41,10 @@ self.addEventListener('push', (event) => {
 // Notification Click Event Listener (Open the app when clicked)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  if (event.action === 'dismiss') {
+    return; // Just close it, do not open the app
+  }
 
   const urlToOpen = event.notification.data?.url || '/';
 
