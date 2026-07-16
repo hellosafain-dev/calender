@@ -234,21 +234,30 @@ export const API = {
     return res.json();
   },
 
+  async subscribePush(payload: any): Promise<{ success: boolean }> {
+    const res = await resilientFetch(`${BASE_URL}/api/push/subscribe`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      let errorText = 'Failed to subscribe push';
+      try {
+        const errJson = await res.json();
+        if (errJson.error) errorText = errJson.error;
+      } catch (e) {}
+      throw new Error(errorText);
+    }
+    return res.json();
+  },
+
   async getVapidPublicKey(): Promise<{ publicKey: string }> {
     const res = await resilientFetch(`${BASE_URL}/api/push/vapid-public-key`);
     if (!res.ok) throw new Error('Failed to fetch VAPID key');
     return res.json();
   },
 
-  async subscribePush(subscription: any): Promise<{ success: boolean }> {
-    const res = await resilientFetch(`${BASE_URL}/api/push/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(subscription),
-    });
-    if (!res.ok) throw new Error('Failed to subscribe push');
-    return res.json();
-  },
+
 
   async unsubscribePush(endpoint: string): Promise<{ success: boolean }> {
     const res = await resilientFetch(`${BASE_URL}/api/push/unsubscribe`, {
