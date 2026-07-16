@@ -672,8 +672,7 @@ export default function CalendarPage({
               onDragEnd={(_, info) => {
                 if (info.offset.y > 80) setSelectedMemory(null);
               }}
-              className={`w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden ${theme.card} border border-white/10 shadow-2xl flex flex-col cursor-grab active:cursor-grabbing select-none`}
-              style={{ maxHeight: "92dvh" }}
+              className={`w-full sm:max-w-lg rounded-none sm:rounded-[28px] overflow-hidden ${theme.card} border-0 sm:border border-white/10 shadow-2xl flex flex-col cursor-grab active:cursor-grabbing select-none h-[100dvh] sm:h-auto sm:max-h-[92dvh]`}
             >
               {/* Drag indicator */}
               <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
@@ -682,13 +681,13 @@ export default function CalendarPage({
 
               {/* Photo Section */}
               {selectedMemory.photos.length > 0 ? (
-                <div className="relative w-full bg-black/40 shrink-0 overflow-hidden flex items-center justify-center" style={{ maxHeight: "50dvh" }}>
+                <div className="relative w-full bg-black/40 overflow-hidden flex items-center justify-center flex-1 sm:max-h-[60dvh]">
                   <motion.img
                     layoutId={`memory-img-${selectedMemory.id}`}
                     src={selectedMemory.photos[activePhotoIndex]}
                     alt={selectedMemory.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-auto max-h-[50dvh] object-cover mx-auto"
+                    className="w-full h-full object-cover sm:object-contain mx-auto"
                     drag={selectedMemory.photos.length > 1 ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={0.2}
@@ -942,7 +941,7 @@ export default function CalendarPage({
               </div>
 
               {/* Action Button */}
-              <div className="pt-4 border-t flex flex-col gap-2">
+              <div className="pt-4 border-t flex flex-col gap-2 border-white/10">
                 {clickedEmptyDate.isWithinRange ? (
                   session.role !== null ? (
                     <button

@@ -433,20 +433,19 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
             <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
               <motion.div
                 layoutId={`watch-icon-${activeMemory.id}`}
-                initial={{ borderRadius: "50%" }}
-                animate={{ borderRadius: "28px" }}
-                exit={{ borderRadius: "50%", opacity: 0, scale: 0.6 }}
-                transition={{ type: "spring", stiffness: 340, damping: 28 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={0.25}
                 onDragEnd={(_, info) => {
                   if (info.offset.y > 80) closeMemory();
                 }}
-                className="relative w-full sm:max-w-lg overflow-hidden pointer-events-auto rounded-t-[28px] sm:rounded-[28px] flex flex-col shadow-2xl cursor-grab active:cursor-grabbing select-none"
+                className="relative w-full sm:max-w-lg overflow-hidden pointer-events-auto rounded-none sm:rounded-[28px] flex flex-col shadow-2xl cursor-grab active:cursor-grabbing select-none h-[100dvh] sm:h-auto sm:max-h-[92dvh]"
                 style={{
                   background: getIconGradient(activeMemory.id, !!activeMemory.isFavorite),
-                  maxHeight: "92dvh",
                   willChange: "transform",
                 }}
               >
@@ -456,14 +455,14 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                 </div>
 
                 {/* Hero Image - adaptive height, natural proportions */}
-                <div className="relative w-full bg-black/30 shrink-0 overflow-hidden flex items-center justify-center" style={{ maxHeight: "50dvh" }}>
+                <div className="relative w-full bg-black/30 overflow-hidden flex items-center justify-center flex-1 sm:max-h-[60dvh]">
                   <motion.img
                     layoutId={`watch-img-${activeMemory.id}`}
                     src={activeMemory.photos[photoIndex] || getUnsplashFlowerUrl(activeMemory.flowerId)}
                     alt={activeMemory.title}
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    className="w-full h-auto max-h-[50dvh] object-cover mx-auto pointer-events-auto cursor-grab active:cursor-grabbing"
+                    className="w-full h-full object-cover sm:object-contain mx-auto pointer-events-auto cursor-grab active:cursor-grabbing"
                     style={{ willChange: "transform" }}
                     drag={activeMemory.photos.length > 1 ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}
@@ -546,7 +545,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.18, duration: 0.3 }}
-                  className="overflow-y-auto flex-1"
+                  className="overflow-y-auto shrink-0"
                   style={{
                     background: "rgba(0,0,0,0.55)",
                     backdropFilter: "blur(24px)",
