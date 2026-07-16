@@ -348,6 +348,25 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_20px_rgba(192,132,252,0.25)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#C084FC]/20 scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=1200"
+  },
+  obsidian_gold: {
+    name: "Obsidian Gold",
+    bg: "bg-[#080808]", // Deep true black
+    card: "bg-[#111111]/80 backdrop-blur-2xl border border-[#D4AF37]/20",
+    cardHover: "hover:bg-[#1A1A1A]/90 hover:border-[#D4AF37]/50",
+    textPrimary: "text-[#F5F5F5]", // Crisp white
+    textSecondary: "text-[#A3A3A3]", // Silver grey
+    accent: "bg-[#D4AF37] !text-black", // Pure gold
+    accentHover: "hover:bg-[#F3E5AB]",
+    accentLight: "bg-[#D4AF37]/10",
+    accentText: "text-[#D4AF37]",
+    border: "border-[#D4AF37]/20",
+    shadow: "shadow-[0_8px_30px_rgba(212,175,55,0.08)]",
+    glow: "shadow-[0_0_20px_rgba(212,175,55,0.15)]",
+    analogClockBg: "bg-[#111111]/60 border-[#D4AF37]/30",
+    analogClockGlow: "shadow-[0_0_15px_rgba(212,175,55,0.2)]",
+    scrollbar: "scrollbar-thin scrollbar-thumb-[#D4AF37]/30 scrollbar-track-transparent",
+    bgImage: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&q=80&w=1200"
   }
 };
 

@@ -84,7 +84,7 @@ export const config = {
 
 const VALID_THEMES = [
   'light','dark','autumn','spring','lavender','cherry','forest','ocean','elegant_dark',
-  'rapunzel','barbie','oswald','butterfly','sunshine','gilded_rose','midnight_forest','cosmic_stardust'
+  'rapunzel','barbie','oswald','butterfly','sunshine','gilded_rose','midnight_forest','cosmic_stardust','obsidian_gold'
 ];
 
 const POETIC_FALLBACKS = [
