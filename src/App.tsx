@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Memory, Reminder, ThemeType } from "./types.js";
 import { THEMES } from "./lib/themes.js";
 import { API, getSession, clearSession, Session } from "./lib/api.js";
@@ -68,14 +68,6 @@ function playMelodiousAlarm(loops = 3) {
   } catch { return () => {}; }
 }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 15, // 15 seconds
-      retry: 2,
-    },
-  },
-});
 
 function playBirthdayChime() {
   try {
@@ -547,7 +539,6 @@ async function initPushNotifications() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
       <ErrorBoundary fallbackMessage="Garden encountered an error">
     <div className={`min-h-screen ${currentTheme.bg} pb-24 transition-colors duration-500 relative overflow-x-hidden`}>
       {/* Dynamic Blurred Theme Background Image */}
@@ -755,6 +746,5 @@ async function initPushNotifications() {
       </AnimatePresence>
     </div>
       </ErrorBoundary>
-    </QueryClientProvider>
   );
 }
