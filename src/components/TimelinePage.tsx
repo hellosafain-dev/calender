@@ -462,7 +462,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                     alt={activeMemory.title}
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover sm:object-contain mx-auto pointer-events-auto cursor-grab active:cursor-grabbing"
+                    className="w-full h-full object-contain mx-auto pointer-events-auto cursor-grab active:cursor-grabbing"
                     style={{ willChange: "transform" }}
                     drag={activeMemory.photos.length > 1 ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}

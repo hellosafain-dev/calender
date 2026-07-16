@@ -687,7 +687,7 @@ export default function CalendarPage({
                     src={selectedMemory.photos[activePhotoIndex]}
                     alt={selectedMemory.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover sm:object-contain mx-auto"
+                    className="w-full h-full object-contain mx-auto"
                     drag={selectedMemory.photos.length > 1 ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={0.2}
