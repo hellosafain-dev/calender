@@ -77,7 +77,7 @@ export default function SettingsPage({
 
   const handleInstallClick = async () => {
     if (isIOS) {
-      alert("To install Bloom Diary on iOS: tap the 'Share' icon at the bottom of Safari and select 'Add to Home Screen'.");
+      setToastMessage({ text: "To install on iOS: tap the 'Share' icon at the bottom of Safari and select 'Add to Home Screen'." });
       return;
     }
     if (deferredPrompt) {
@@ -87,7 +87,7 @@ export default function SettingsPage({
         setDeferredPrompt(null);
       }
     } else {
-      alert("App is either already installed, or your browser doesn't support automatic installation. Try 'Add to Home Screen' in your browser menu!");
+      setToastMessage({ text: "App is already installed, or you need to tap your browser menu (3 dots) and select 'Install app'." });
     }
   };
 
