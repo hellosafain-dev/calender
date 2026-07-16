@@ -24,11 +24,12 @@ import {
 import { Reminder } from "../types.js";
 import { ThemeConfig } from "../lib/themes.js";
 import { API } from "../lib/api.js";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAddReminder, useUpdateReminder, useDeleteReminder } from "../lib/hooks.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface ClockPageProps {
   reminders: Reminder[];
-  onRefreshReminders: () => void;
   theme: ThemeConfig;
   session?: { role: string | null; username: string | null };
 }
@@ -259,7 +260,15 @@ function ReminderEditForm({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function ClockPage({ reminders, onRefreshReminders, theme, session }: ClockPageProps) {
+export default function ClockPage({
+  reminders,
+  theme,
+  session
+}: ClockPageProps) {
+  const { mutateAsync: addReminder } = useAddReminder();
+  const { mutateAsync: updateReminder } = useUpdateReminder();
+  const { mutateAsync: deleteReminder } = useDeleteReminder();
+  const queryClient = useQueryClient();
   const [time, setTime] = useState(new Date());
 
   // Sub-tabs in Reminders (0: Alarms List, 1: Planner & Love Notes)
@@ -375,7 +384,7 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
     if (!aiSuggestion) return;
     setSavingAI(true);
     try {
-      await API.createReminder({
+      await addReminder({
         title: aiSuggestion.title,
         time: aiSuggestion.time,
         date: aiSuggestion.date || undefined,
@@ -385,7 +394,6 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
       setJustSaved(true);
       setAiInput("");
       setAiSuggestion(null);
-      onRefreshReminders();
       setTimeout(() => setJustSaved(false), 2500);
     } catch {} finally { setSavingAI(false); }
   };
@@ -395,24 +403,23 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
     e.preventDefault();
     setMSaving(true);
     try {
-      await API.createReminder({ title: mTitle, time: mTime, date: mDate || undefined, repeat: mRepeat, type: mType });
+      await addReminder({ title: mTitle, time: mTime, date: mDate || undefined, repeat: mRepeat, type: mType });
       setMTitle(""); setMTime("09:00"); setMDate(""); setMRepeat("none"); setMType("custom");
       setShowManual(false);
-      onRefreshReminders();
     } catch {} finally { setMSaving(false); }
   };
 
   // ── Toggle / Delete / Edit ──
   const handleToggle = async (id: string, cur: boolean) => {
-    try { await API.updateReminder(id, { isActive: !cur }); onRefreshReminders(); } catch {}
+    try { await updateReminder({ id, payload: { isActive: !cur } }); } catch {}
   };
   const confirmDelete = async () => {
     if (!deletingId) return;
-    try { await API.deleteReminder(deletingId); onRefreshReminders(); } catch {}
+    try { await deleteReminder(deletingId); } catch {}
     finally { setDeletingId(null); }
   };
   const handleEdit = async (id: string, data: Partial<Reminder>) => {
-    try { await API.updateReminder(id, data); onRefreshReminders(); } catch {}
+    try { await updateReminder({ id, payload: data }); } catch {}
     finally { setEditingId(null); }
   };
 
@@ -433,13 +440,12 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
     try {
       setAddingPreset(true);
       const fullTitle = note ? `${title} | ${note}` : title;
-      await API.createReminder({
+      await addReminder({
         title: fullTitle,
         time: presetTime,
         repeat: "daily",
         type: type
       });
-      onRefreshReminders();
       setActivePreset(null);
     } catch (err) {
       console.error("Failed to create preset reminder:", err);
@@ -454,13 +460,12 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
     try {
       setSendingLoveNote(true);
       const fullTitle = `${loveNoteTitle.trim()} | ${loveNoteContent.trim()}`;
-      await API.createReminder({
+      await addReminder({
         title: fullTitle,
         time: loveNoteTime,
         repeat: "daily",
         type: "custom"
       });
-      onRefreshReminders();
       setLoveNoteTitle("");
       setLoveNoteContent("");
       setLoveNoteSuccess(true);
@@ -743,7 +748,7 @@ export default function ClockPage({ reminders, onRefreshReminders, theme, sessio
               </span>
             )}
           </div>
-          <button onClick={onRefreshReminders}
+          <button onClick={() => queryClient.invalidateQueries({ queryKey: ['reminders'] })}
             className={`p-2 rounded-xl ${theme.textSecondary} hover:text-pink-400 border ${theme.border} bg-white/5 active:scale-90 transition-all`}>
             <RefreshCw className="w-3.5 h-3.5" />
           </button>

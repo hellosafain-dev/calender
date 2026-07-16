@@ -13,10 +13,11 @@ import {
 import { Memory, ThemeType } from "../types.js";
 import { ThemeConfig, THEMES, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAddMemory, useUpdateMemory, useDeleteMemory } from "../lib/hooks.js";
 
 interface SettingsPageProps {
   memories: Memory[];
-  onRefreshMemories: () => void;
   theme: ThemeConfig;
   selectedThemeName: ThemeType;
   onChangeTheme: (themeName: ThemeType) => void;
@@ -31,7 +32,6 @@ interface SettingsPageProps {
 
 export default function SettingsPage({
   memories,
-  onRefreshMemories,
   theme,
   selectedThemeName,
   onChangeTheme,
@@ -43,6 +43,11 @@ export default function SettingsPage({
   autoCycle = false,
   onToggleAutoCycle = () => {}
 }: SettingsPageProps) {
+  const { mutateAsync: addMemory } = useAddMemory();
+  const { mutateAsync: updateMemory } = useUpdateMemory();
+  const { mutateAsync: deleteMemory } = useDeleteMemory();
+  const queryClient = useQueryClient();
+
   // Authentication Passcode State
   const [passcode, setPasscode] = useState("");
   const [authError, setAuthError] = useState("");
@@ -132,9 +137,9 @@ export default function SettingsPage({
     try {
       await API.updateSettings({ customGreeting: greetingInput });
       setGreetingSuccess("Sanctuary greeting updated successfully!");
-      setToastMessage({ text: "Sanctuary greeting updated successfully!" });
-      onRefreshMemories(); // Refresh settings in parent App component
-    } catch (err) {
+      setToastMessage({ text: "Custom greeting has been securely updated." });
+      queryClient.invalidateQueries({ queryKey: ['settings'] }); // Refresh settings
+    } catch (err: any) {
       console.error(err);
       setToastMessage({ text: "Failed to update greeting.", isError: true });
     }
@@ -288,13 +293,13 @@ export default function SettingsPage({
 
     try {
       if (editingMemory) {
-        const res = await API.updateMemory(editingMemory.id, payload);
+        const res = await updateMemory({ id: editingMemory.id, payload });
         if (res.success) {
           setEditingMemory(null);
           setToastMessage({ text: "Memory blossom successfully updated in your garden!" });
         }
       } else {
-        await API.createMemory(payload);
+        await addMemory(payload);
         setToastMessage({ text: "A beautiful new memory flower has been planted!" });
       }
       
@@ -311,7 +316,6 @@ export default function SettingsPage({
       setFormDraft(false);
       
       if (clearPreSelectedDate) clearPreSelectedDate();
-      onRefreshMemories();
     } catch (err) {
       console.error(err);
       setToastMessage({ text: "Failed to save memory blossom.", isError: true });
@@ -322,7 +326,7 @@ export default function SettingsPage({
   const handleDuplicateMemory = async (memory: Memory) => {
     try {
       const duplicateDate = `${memory.date}-dup`;
-      await API.createMemory({
+      await addMemory({
         date: duplicateDate,
         title: `${memory.title} (Copy)`,
         note: memory.note,
@@ -334,7 +338,6 @@ export default function SettingsPage({
         photos: memory.photos,
         isDraft: true
       });
-      onRefreshMemories();
       setToastMessage({ text: "Memory successfully duplicated!" });
     } catch (err) {
       console.error(err);
@@ -349,9 +352,8 @@ export default function SettingsPage({
   const confirmDeleteMemory = async () => {
     if (!deletingMemoryId) return;
     try {
-      const res = await API.deleteMemory(deletingMemoryId);
+      const res = await deleteMemory(deletingMemoryId);
       if (res.success) {
-        onRefreshMemories();
         setToastMessage({ text: "Memory flower successfully removed from your garden." });
       }
     } catch (err) {
@@ -412,8 +414,8 @@ export default function SettingsPage({
         const parsed = JSON.parse(event.target?.result as string);
         const res = await API.restoreBackup(parsed);
         if (res.success) {
-          setToastMessage({ text: "Database restored successfully! Your memories have blossomed." });
-          onRefreshMemories();
+          setToastMessage({ text: "Backup restored successfully! Welcome back to your garden." });
+          queryClient.invalidateQueries(); // Refresh everything
         }
       } catch (err) {
         setToastMessage({ text: "Failed to restore backup: Invalid JSON structure.", isError: true });

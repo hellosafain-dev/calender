@@ -15,6 +15,7 @@ import TimelinePage from "./components/TimelinePage.js";
 import ClockPage from "./components/ClockPage.js";
 import SettingsPage from "./components/SettingsPage.js";
 import ErrorBoundary from "./components/ErrorBoundary.js";
+import { useMemories, useReminders, useSettings, useUpdateSettings } from "./lib/hooks.js";
 import { Flower, ShieldAlert, Heart, Award, Compass, Pill, Activity, Mail } from "lucide-react";
 import GlowingLanterns from "./components/GlowingLanterns.js";
 import BirthdaySurprise from "./components/BirthdaySurprise.js";
@@ -146,16 +147,18 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(0);
 
   // Application Data States
-  const [memories, setMemories] = useState<Memory[]>([]);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const { data: memories = [], isLoading: isMemoriesLoading, isError: isMemoriesError } = useMemories();
+  const { data: reminders = [], isLoading: isRemindersLoading, isError: isRemindersError } = useReminders();
+  const { data: sData, isLoading: isSettingsLoading, isError: isSettingsError } = useSettings();
+  
+  const loading = isMemoriesLoading || isRemindersLoading || isSettingsLoading;
+  const error = (isMemoriesError || isRemindersError || isSettingsError) ? "Failed to coordinate data with our digital garden server. Please refresh." : null;
+  const { mutateAsync: updateSettings } = useUpdateSettings();
+
   const [selectedThemeName, setSelectedThemeName] = useState<ThemeType>("cherry");
   const [autoCycle, setAutoCycle] = useState(false);
   const [diaryTitle, setDiaryTitle] = useState("Bloom Diary");
   const [customGreeting, setCustomGreeting] = useState("");
-
-  // Loading & Error States
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // User Authentication & Roles (Admin, Viewer, Guest)
   const [session, setSession] = useState<Session>({ role: null, username: null });
@@ -328,55 +331,21 @@ async function initPushNotifications() {
   }
 }
 
-  // Load all server-side data on mount (with optional visible spinner)
-  const loadAllData = async (showSpinner = true) => {
-    try {
-      if (showSpinner) {
-        setLoading(true);
-      }
-      setError(null);
- 
-      // Fetch active settings & themes
-      const sData = await API.getSettings();
+  useEffect(() => {
+    if (sData) {
       setSelectedThemeName(sData.theme);
       setDiaryTitle(sData.title);
       setAutoCycle(!!sData.autoCycle);
       setCustomGreeting(sData.customGreeting || "");
- 
-      // Fetch memories & reminders
-      const [mList, rList] = await Promise.all([
-        API.getMemories(),
-        API.getReminders()
-      ]);
- 
-      setMemories(mList);
-      setReminders(rList);
-    } catch (err: any) {
-      console.error("Failed to fetch full-stack server state:", err);
-      if (showSpinner) {
-        setError("Failed to coordinate data with our digital garden server. Please refresh.");
-      }
-    } finally {
-      if (showSpinner) {
-        setLoading(false);
-      }
     }
-  };
+  }, [sData]);
  
   useEffect(() => {
     // Read session from local storage on bootstrap
     const activeSession = getSession();
     setSession(activeSession);
     
-    loadAllData(true);
     initPushNotifications();
-
-    // Regularly update data in the background every 2 minutes (120000ms)
-    const intervalId = setInterval(() => {
-      loadAllData(false);
-    }, 120000);
-
-    return () => clearInterval(intervalId);
   }, []);
 
   // Trigger birthday alarm sound & alert notification when timer ends
@@ -503,22 +472,26 @@ async function initPushNotifications() {
 
 
   const handleThemeChange = async (themeName: ThemeType) => {
-    try {
-      setSelectedThemeName(themeName);
-      setAutoCycle(false);
-      await API.updateSettings({ theme: themeName, autoCycle: false });
-    } catch (err) {
-      console.error(err);
+    setSelectedThemeName(themeName);
+    setAutoCycle(false);
+    if (session) {
+      try {
+        await updateSettings({ theme: themeName, autoCycle: false });
+      } catch (err) {
+        console.error("Failed to save theme:", err);
+      }
     }
   };
 
   const handleToggleAutoCycle = async () => {
     const nextVal = !autoCycle;
     setAutoCycle(nextVal);
-    try {
-      await API.updateSettings({ autoCycle: nextVal });
-    } catch (err) {
-      console.error("Failed to update auto cycle settings:", err);
+    if (session) {
+      try {
+        await updateSettings({ autoCycle: nextVal });
+      } catch (err) {
+        console.error("Failed to save autoCycle:", err);
+      }
     }
   };
 
@@ -564,7 +537,7 @@ async function initPushNotifications() {
           <p className="text-sm text-red-500 max-w-md mt-2">{error}</p>
         </div>
         <button
-          onClick={() => loadAllData(true)}
+          onClick={() => window.location.reload()}
           className="px-5 py-2.5 rounded-full bg-red-600 text-white font-bold text-xs shadow-md cursor-pointer hover:bg-red-700 active:scale-95 transition-all"
         >
           Retry Connection
@@ -619,7 +592,6 @@ async function initPushNotifications() {
             >
               <CalendarPage
                 memories={memories}
-                onRefreshMemories={loadAllData}
                 theme={currentTheme}
                 session={session}
                 onNavigateToSettingsWithDate={handleNavigateToSettingsWithDate}
@@ -653,7 +625,6 @@ async function initPushNotifications() {
             >
               <ClockPage
                 reminders={reminders}
-                onRefreshReminders={loadAllData}
                 theme={currentTheme}
               />
             </motion.div>
@@ -669,7 +640,6 @@ async function initPushNotifications() {
             >
               <SettingsPage
                 memories={memories}
-                onRefreshMemories={loadAllData}
                 theme={currentTheme}
                 selectedThemeName={selectedThemeName}
                 onChangeTheme={handleThemeChange}
@@ -762,7 +732,7 @@ async function initPushNotifications() {
                       time: snoozeHHMM,
                       repeat: "none",
                       type: activeTriggeredReminder.type
-                    }).then(() => loadAllData(false)).catch(() => {});
+                    }).catch(() => {});
                     
                     setActiveTriggeredReminder(null);
                   }}

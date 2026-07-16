@@ -10,6 +10,7 @@ import { Memory, Reminder } from "../types.js";
 import { ThemeConfig, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
 import { fetchCurrentWeather, WeatherInfo } from "../lib/weather.js";
+import { useToggleFavorite } from "../lib/hooks.js";
 
 function BirthdayCountdownCard({ theme }: { theme: ThemeConfig }) {
   const calculateTimeLeft = () => {
@@ -101,7 +102,6 @@ function BirthdaySurpriseCard({ theme }: { theme: ThemeConfig }) {
 
 interface CalendarPageProps {
   memories: Memory[];
-  onRefreshMemories: () => void;
   theme: ThemeConfig;
   session: Session;
   onNavigateToSettingsWithDate: (dateStr: string) => void;
@@ -111,13 +111,13 @@ interface CalendarPageProps {
 
 export default function CalendarPage({
   memories,
-  onRefreshMemories,
   theme,
   session,
   onNavigateToSettingsWithDate,
   onClickDate,
   customGreeting
 }: CalendarPageProps) {
+  const { mutateAsync: toggleFavorite } = useToggleFavorite();
   // Current month being viewed on the calendar
   const today = new Date();
   const currentYearOfToday = 2025; // Base year set to 2025 as requested
@@ -363,9 +363,8 @@ export default function CalendarPage({
   const handleToggleFavorite = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     try {
-      const result = await API.toggleFavorite(id);
+      const result = await toggleFavorite(id);
       if (result.success) {
-        onRefreshMemories();
         if (selectedMemory && selectedMemory.id === id) {
           setSelectedMemory(prev => prev ? { ...prev, isFavorite: result.isFavorite } : null);
         }
