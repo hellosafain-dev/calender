@@ -8,13 +8,14 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode,
   Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X, Download,
-  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2, Pencil, Flower2, Tag
+  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2, Pencil, Flower2, Tag, Bell
 } from "lucide-react";
 import { Memory, ThemeType } from "../types.js";
 import { ThemeConfig, THEMES, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAddMemory, useUpdateMemory, useDeleteMemory } from "../lib/hooks.js";
+import { requestAndInitPushNotifications } from "../lib/pushUtils.js";
 
 interface SettingsPageProps {
   memories: Memory[];
@@ -517,6 +518,18 @@ export default function SettingsPage({
               Install App
             </button>
           )}
+
+          <button
+            onClick={async () => {
+              const success = await requestAndInitPushNotifications();
+              if (success) setToastMessage({ text: "Push notifications successfully enabled!" });
+              else setToastMessage({ text: "Please allow notifications in browser settings.", isError: true });
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-black transition-all active:scale-95 text-pink-400"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            Enable Notifications
+          </button>
 
           <button
             id="logout-btn"

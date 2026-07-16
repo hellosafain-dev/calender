@@ -26,6 +26,7 @@ import { ThemeConfig } from "../lib/themes.js";
 import { API } from "../lib/api.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAddReminder, useUpdateReminder, useDeleteReminder } from "../lib/hooks.js";
+import { requestAndInitPushNotifications } from "../lib/pushUtils.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface ClockPageProps {
@@ -395,6 +396,9 @@ export default function ClockPage({
       setAiInput("");
       setAiSuggestion(null);
       setTimeout(() => setJustSaved(false), 2500);
+      
+      // Request push notifications silently (if not granted yet)
+      requestAndInitPushNotifications();
     } catch {} finally { setSavingAI(false); }
   };
 
@@ -406,12 +410,18 @@ export default function ClockPage({
       await addReminder({ title: mTitle, time: mTime, date: mDate || undefined, repeat: mRepeat, type: mType });
       setMTitle(""); setMTime("09:00"); setMDate(""); setMRepeat("none"); setMType("custom");
       setShowManual(false);
+
+      // Prompt for mobile push notification
+      requestAndInitPushNotifications();
     } catch {} finally { setMSaving(false); }
   };
 
   // ── Toggle / Delete / Edit ──
   const handleToggle = async (id: string, cur: boolean) => {
-    try { await updateReminder({ id, payload: { isActive: !cur } }); } catch {}
+    try { 
+      await updateReminder({ id, payload: { isActive: !cur } });
+      if (!cur) requestAndInitPushNotifications(); 
+    } catch {}
   };
   const confirmDelete = async () => {
     if (!deletingId) return;
