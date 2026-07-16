@@ -115,7 +115,8 @@ function WatchIcon({ memory, index, onTap, theme }: WatchIconProps) {
           }}
         >
           {/* Background photo blurred into the icon */}
-          <img
+          <motion.img
+            layoutId={`watch-img-${memory.id}`}
             src={coverImg}
             alt=""
             loading="lazy"
@@ -425,11 +426,11 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={closeMemory}
-              className="fixed inset-0 z-40 bg-black/75 backdrop-blur-xl"
+              className="fixed inset-0 z-40 bg-black/80 backdrop-blur-2xl"
             />
 
             {/* Card — Apple-style bottom sheet on mobile, centered on desktop */}
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+            <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
               <motion.div
                 layoutId={`watch-icon-${activeMemory.id}`}
                 initial={{ borderRadius: "50%" }}
@@ -455,17 +456,26 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
                 </div>
 
                 {/* Hero Image - adaptive height, natural proportions */}
-                <div className="relative w-full bg-black/30 shrink-0 overflow-hidden" style={{ maxHeight: "50dvh" }}>
+                <div className="relative w-full bg-black/30 shrink-0 overflow-hidden flex items-center justify-center" style={{ maxHeight: "50dvh" }}>
                   <motion.img
-                    initial={{ opacity: 0, scale: 1.05 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.12, duration: 0.35 }}
+                    layoutId={`watch-img-${activeMemory.id}`}
                     src={activeMemory.photos[photoIndex] || getUnsplashFlowerUrl(activeMemory.flowerId)}
                     alt={activeMemory.title}
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    className="w-full h-auto max-h-[50dvh] object-contain mx-auto pointer-events-none"
+                    className="w-full h-auto max-h-[50dvh] object-cover mx-auto pointer-events-auto cursor-grab active:cursor-grabbing"
                     style={{ willChange: "transform" }}
+                    drag={activeMemory.photos.length > 1 ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(e, info) => {
+                      e.stopPropagation();
+                      if (info.offset.x < -40) {
+                        setPhotoIndex(p => p < activeMemory.photos.length - 1 ? p + 1 : 0);
+                      } else if (info.offset.x > 40) {
+                        setPhotoIndex(p => p > 0 ? p - 1 : activeMemory.photos.length - 1);
+                      }
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 

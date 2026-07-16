@@ -611,7 +611,8 @@ export default function CalendarPage({
               >
                 {todayMemory.photos[0] && (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden relative">
-                    <img
+                    <motion.img
+                      layoutId={`memory-img-${todayMemory.id}`}
                       src={todayMemory.photos[0]}
                       alt="Today"
                       referrerPolicy="no-referrer"
@@ -657,12 +658,13 @@ export default function CalendarPage({
       {/* Expandable Memory Card View (AnimatePresence) */}
       <AnimatePresence>
         {selectedMemory && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xl" onClick={() => setSelectedMemory(null)}>
+          <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-2xl" onClick={() => setSelectedMemory(null)}>
             <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 60 }}
-              transition={{ type: "spring", stiffness: 340, damping: 28 }}
+              layoutId={selectedMemory.id === todayMemory?.id ? `memory-card-${selectedMemory.id}` : undefined}
+              initial={{ opacity: 0, y: 60, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 60, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
               onClick={e => e.stopPropagation()}
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}
@@ -680,12 +682,23 @@ export default function CalendarPage({
 
               {/* Photo Section */}
               {selectedMemory.photos.length > 0 ? (
-                <div className="relative w-full bg-black/40 shrink-0 overflow-hidden" style={{ maxHeight: "50dvh" }}>
-                  <img
+                <div className="relative w-full bg-black/40 shrink-0 overflow-hidden flex items-center justify-center" style={{ maxHeight: "50dvh" }}>
+                  <motion.img
+                    layoutId={`memory-img-${selectedMemory.id}`}
                     src={selectedMemory.photos[activePhotoIndex]}
                     alt={selectedMemory.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-auto max-h-[50dvh] object-contain mx-auto"
+                    className="w-full h-auto max-h-[50dvh] object-cover mx-auto"
+                    drag={selectedMemory.photos.length > 1 ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(_, info) => {
+                      if (info.offset.x < -40) {
+                        setActivePhotoIndex(prev => prev < selectedMemory.photos.length - 1 ? prev + 1 : 0);
+                      } else if (info.offset.x > 40) {
+                        setActivePhotoIndex(prev => prev > 0 ? prev - 1 : selectedMemory.photos.length - 1);
+                      }
+                    }}
                   />
                   
                   {/* Photo Swipe Controllers */}
