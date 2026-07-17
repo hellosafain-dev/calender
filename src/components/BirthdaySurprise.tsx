@@ -9,7 +9,7 @@ interface BirthdaySurpriseProps {
 
 export default function BirthdaySurprise({ onClose }: BirthdaySurpriseProps) {
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4 overflow-y-auto select-none">
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center p-4 py-12 sm:py-20 overflow-y-auto select-none">
       {/* Floating lanterns rising in the pitch black background */}
       <GlowingLanterns />
 
