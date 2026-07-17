@@ -21,6 +21,7 @@ import GlowingLanterns from "./components/GlowingLanterns.js";
 import AlarmOverlay from "./components/AlarmOverlay.js";
 import BirthdayCountdown from "./components/BirthdayCountdown.js";
 import BirthdaySurprise from "./components/BirthdaySurprise.js";
+import LockScreen from "./components/LockScreen.js";
 
 // ─── Constants & Alarm Utils ───────────────────────────────────────────────
 const TYPE_META: Record<string, { gradient: string; label: string; border: string }> = {
@@ -155,7 +156,7 @@ export default function App() {
   const [customGreeting, setCustomGreeting] = useState("");
 
   // User Authentication & Roles (Admin, Viewer, Guest)
-  const [session, setSession] = useState<Session>({ role: null, username: null });
+  const [session, setSession] = useState<Session>(() => getSession());
 
   // Navigation Callback dates (e.g. tapping empty calendar date takes Admin to Write entry with that pre-selected date)
   const [preSelectedDate, setPreSelectedDate] = useState<string | null>(null);
@@ -206,7 +207,7 @@ export default function App() {
   // Background check for active reminders
   useEffect(() => {
     const checkActiveReminders = () => {
-      if (loading) return; // Prevent alarms from playing while the app is still loading (avoids ghost sounds on black screen)
+      if (loading || !session.role) return; // Prevent alarms from playing while the app is still loading or locked
       
       const now = new Date();
       const currentHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -265,7 +266,7 @@ export default function App() {
     checkActiveReminders();
 
     return () => clearInterval(interval);
-  }, [reminders, triggeredToday, loading]);
+  }, [reminders, triggeredToday, loading, session.role]);
 
   useEffect(() => {
     if (sData) {
@@ -276,15 +277,12 @@ export default function App() {
     }
   }, [sData]);
  
-  useEffect(() => {
-    // Read session from local storage on bootstrap
-    const activeSession = getSession();
-    setSession(activeSession);
-  }, []);
+
 
   // Trigger birthday alarm sound & alert notification when timer ends
   useEffect(() => {
     if (!isBirthday) return;
+    if (!session.role) return; // Do not trigger on the lock screen
     
     // Ensure it only triggers once per session
     if (window.sessionStorage.getItem("bloom_birthday_alarm_played") === "true") return;
@@ -333,7 +331,7 @@ export default function App() {
       window.removeEventListener("touchstart", onUserInteraction);
       if (stopAudio) stopAudio();
     };
-  }, [isBirthday]);
+  }, [isBirthday, session.role]);
 
   // Update document body style when active theme transitions
   useEffect(() => {
@@ -477,6 +475,28 @@ export default function App() {
           Retry Connection
         </button>
       </div>
+    );
+  }
+
+  if (!session.role) {
+    return (
+      <ErrorBoundary fallbackMessage="Garden encountered an error">
+        <div className={`min-h-screen ${currentTheme.bg} transition-colors duration-500 font-sans antialiased text-gray-800 selection:bg-pink-150 relative overflow-x-hidden`}>
+          {currentTheme.bgImage && (
+            <div 
+              className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-1000"
+              style={{ 
+                backgroundImage: `url(${currentTheme.bgImage})`,
+                filter: 'blur(8px) brightness(0.85) saturate(1.2)',
+                transform: 'scale(1.05)'
+              }} 
+            />
+          )}
+          <div className="relative z-10 w-full min-h-screen flex items-center justify-center">
+             <LockScreen theme={currentTheme} onLoginSuccess={handleLoginSuccess} />
+          </div>
+        </div>
+      </ErrorBoundary>
     );
   }
 
