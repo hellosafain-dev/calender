@@ -390,7 +390,10 @@ export default function CalendarPage({
   };
 
   // Today's memory preview check
-  const todayDateStr = today.toISOString().split("T")[0];
+  const localYear = today.getFullYear();
+  const localMonth = String(today.getMonth() + 1).padStart(2, "0");
+  const localDay = String(today.getDate()).padStart(2, "0");
+  const todayDateStr = `${localYear}-${localMonth}-${localDay}`;
   const todayMemory = getMemoryForDate(todayDateStr);
 
   const isPrevDisabled = currentYear < minDate.getFullYear() || (currentYear === minDate.getFullYear() && currentMonth <= minDate.getMonth());
