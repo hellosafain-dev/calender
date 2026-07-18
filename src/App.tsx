@@ -121,19 +121,27 @@ function playBirthdayChime() {
   }
 }
 
-function sendBirthdayNotification() {
+async function sendBirthdayNotification() {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
-    const n = new Notification("A Magical Surprise Awaits...", {
+    const title = "A Magical Surprise Awaits...";
+    const options = {
       body: "Happy Birthday, My Sweetheart! Open the app to see your surprise.",
       icon: "/icons/icon-192.png",
       tag: "birthday-surprise",
       requireInteraction: true
-    });
-    n.onclick = () => {
-      window.focus();
-      n.close();
     };
+    try {
+      const n = new Notification(title, options);
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e: any) {
+      if (e.name === "TypeError" || e.message.includes("constructor")) {
+        // Fallback for Android Chrome which requires Service Worker
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, options);
+        });
+      }
+    }
   }
 }
 
@@ -253,10 +261,19 @@ export default function App() {
           
           if ("Notification" in window && Notification.permission === "granted") {
             const cleanTitle = reminder.title.split("|")[0].trim();
-            new Notification(cleanTitle, {
+            const options = {
               body: `Your ${TYPE_META[reminder.type]?.label || 'reminder'} is ringing!`,
               icon: "/icons/icon-192.png"
-            });
+            };
+            try {
+              new Notification(cleanTitle, options);
+            } catch (e: any) {
+              if (e.name === "TypeError" || e.message.includes("constructor")) {
+                navigator.serviceWorker.ready.then(reg => {
+                  reg.showNotification(cleanTitle, options);
+                });
+              }
+            }
           }
         }
       });
