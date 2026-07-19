@@ -7,7 +7,7 @@ interface CompanionLayerProps {
   isActive?: boolean;
 }
 
-type CompanionState = 'IDLE' | 'ACTION' | 'ATTENTION' | 'ROAMING' | 'HIDE';
+type CompanionState = 'IDLE' | 'ACTION' | 'ATTENTION' | 'ROAMING' | 'HIDE' | 'SLEEPING' | 'THINKING' | 'WATCHING';
 
 export default function CompanionLayer({ theme, isActive = true }: CompanionLayerProps) {
   const [state, setState] = useState<CompanionState>('IDLE');
@@ -58,16 +58,26 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
             }
           }, Math.random() * 8000 + 4000); // 4-12 seconds
         } else {
-          // Others just idle and occasionally do an ACTION if they have one (or just stay IDLE)
-          // Wait, the user said "not other actoion then that", meaning no actions.
-          // We will just do nothing, let them stay IDLE.
-          setFacingLeft(true); // Always face left (viewer)
+          // Non-roaming companions cycle through story-telling gestures
+          setFacingLeft(true); // Always face left (viewer/content)
+          timeout = setTimeout(() => {
+            const r = Math.random();
+            if (r < 0.25) setState('SLEEPING');
+            else if (r < 0.5) setState('THINKING');
+            else if (r < 0.75) setState('WATCHING');
+            else setState('ACTION');
+          }, Math.random() * 5000 + 3000); // Trigger a gesture every 3-8 seconds
         }
-      } else if (state === 'ACTION') {
-        // Action lasts 2-4s
+      } else if (state === 'ACTION' || state === 'THINKING' || state === 'WATCHING') {
+        // These gestures last a few seconds
         timeout = setTimeout(() => {
           setState('IDLE');
-        }, Math.random() * 2000 + 2000);
+        }, Math.random() * 3000 + 2000);
+      } else if (state === 'SLEEPING') {
+        // Sleeping lasts a bit longer
+        timeout = setTimeout(() => {
+          setState('IDLE');
+        }, Math.random() * 8000 + 5000);
       } else if (state === 'ATTENTION') {
         timeout = setTimeout(() => {
           setState('IDLE');
@@ -168,6 +178,12 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
                 ? { rotate: [0, -10, 10, -10, 10, 0], y: [0, -10, 0] }
                 : state === 'ATTENTION'
                 ? { scale: [1, 1.2, 1], rotate: [0, -5, 0] }
+                : state === 'SLEEPING'
+                ? { y: [0, 3, 0], rotate: [0, 5, 0] } // slow gentle sleep bob
+                : state === 'THINKING'
+                ? { y: [0, -5, 0], rotate: [0, -15, 0] }
+                : state === 'WATCHING'
+                ? { y: [0, -2, 0], rotate: [0, 10, 0], scale: [1, 1.05, 1] } // subtle lean forward
                 : state === 'ROAMING' && (type === 'butterfly' || type === 'robin' || type === 'bluebird')
                 ? { y: [0, -15, 5, -10, 0] } // flying bob
                 : { y: [0, -3, 0] } // idle breathing
@@ -177,11 +193,30 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
               willChange: "transform"
             }}
             transition={{
-              duration: state === 'ACTION' ? 0.8 : state === 'ATTENTION' ? 0.5 : state === 'ROAMING' ? 2 : 4,
-              repeat: state === 'IDLE' ? Infinity : 0,
+              duration: state === 'ACTION' ? 0.8 : state === 'ATTENTION' ? 0.5 : state === 'SLEEPING' ? 3 : state === 'ROAMING' ? 2 : 4,
+              repeat: ['IDLE', 'SLEEPING', 'WATCHING'].includes(state) ? Infinity : 0,
               ease: "easeInOut"
             }}
           >
+            {/* Storytelling Gesture Status Indicators */}
+            {state === 'SLEEPING' && (
+              <motion.text x="70" y="30" fontSize="24" fill="#60A5FA" fontWeight="bold"
+                animate={{ y: [0, -20], opacity: [0, 1, 0], scale: [0.5, 1.2] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >Zzz</motion.text>
+            )}
+            {state === 'THINKING' && (
+              <motion.text x="70" y="30" fontSize="24" fill="#FCD34D" fontWeight="bold"
+                animate={{ y: [0, -10, 0], opacity: [0, 1, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >?</motion.text>
+            )}
+            {state === 'WATCHING' && (
+              <motion.text x="70" y="30" fontSize="18" fill="#F472B6"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >👀</motion.text>
+            )}
             {/* ── OCTOPUS (Oswald) ── */}
             {type === 'octopus' && (
               <>
