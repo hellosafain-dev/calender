@@ -5,6 +5,21 @@
 
 import { ThemeType } from "../types.js";
 
+export interface ParticleDefinition {
+  type: 'petal' | 'firefly' | 'snow' | 'rain' | 'star' | 'cloud' | 'lightray';
+  count: number;
+  speed: [min: number, max: number];
+  size: [min: number, max: number];
+  drift: boolean;
+  glow?: boolean;
+  spawnRate: number;
+}
+
+export interface CompanionDefinition {
+  type: 'robin' | 'squirrel' | 'seagull' | 'owl' | 'bluebird' | 'fox';
+  tint: string;
+}
+
 export interface ThemeConfig {
   name: string;
   bg: string;
@@ -23,6 +38,10 @@ export interface ThemeConfig {
   analogClockGlow: string;
   scrollbar: string;
   bgImage?: string;
+
+  // Ambient Layer Specs
+  ambient?: ParticleDefinition[];
+  companion?: CompanionDefinition;
 }
 
 export const THEMES: Record<ThemeType, ThemeConfig> = {
@@ -44,6 +63,10 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_15px_rgba(196,154,69,0.1)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#EBE6DC] scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'lightray', count: 2, speed: [0, 0], size: [50, 150], drift: false, glow: true, spawnRate: 0 }
+    ],
+    companion: { type: 'robin', tint: '#C49A45' }
   },
   dark: {
     name: "Velvet Midnight",
@@ -63,6 +86,10 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_20px_rgba(167,139,250,0.2)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#231E35] scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'star', count: 30, speed: [0, 0.1], size: [1, 2], drift: false, glow: true, spawnRate: 0.1 }
+    ],
+    companion: { type: 'owl', tint: '#A78BFA' }
   },
   autumn: {
     name: "Golden Terracotta",
@@ -82,6 +109,10 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_15px_rgba(217,107,39,0.1)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#F2DFCE] scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'petal', count: 20, speed: [0.5, 1.2], size: [3, 8], drift: true, spawnRate: 1 }
+    ],
+    companion: { type: 'squirrel', tint: '#D96B27' }
   },
   spring: {
     name: "Meadow Whisper",
@@ -139,6 +170,10 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_20px_rgba(236,112,139,0.15)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#F8E1E1] scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1522748906645-95d8adfd52c7?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'petal', count: 35, speed: [0.5, 1.5], size: [4, 12], drift: true, spawnRate: 2 }
+    ],
+    companion: { type: 'robin', tint: '#EC708B' }
   },
   forest: {
     name: "Redwood Canopy",
@@ -158,6 +193,11 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_20px_rgba(74,166,133,0.15)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#203129] scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'firefly', count: 25, speed: [0.2, 0.6], size: [1, 3], drift: true, glow: true, spawnRate: 0.5 },
+      { type: 'lightray', count: 3, speed: [0, 0], size: [100, 300], drift: false, glow: true, spawnRate: 0 }
+    ],
+    companion: { type: 'squirrel', tint: '#D96B27' }
   },
   ocean: {
     name: "Misty Seafoam",
@@ -177,6 +217,10 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockGlow: "shadow-[0_0_20px_rgba(79,173,210,0.15)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#192D3E] scrollbar-track-transparent",
     bgImage: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'rain', count: 60, speed: [4, 8], size: [1, 2], drift: false, spawnRate: 5 }
+    ],
+    companion: { type: 'seagull', tint: '#ECF3FA' }
   },
   elegant_dark: {
     name: "Elegant Dark",
@@ -214,7 +258,12 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockBg: "bg-[#291B3E]/40 border-[#34224F]",
     analogClockGlow: "shadow-[0_0_20px_rgba(252,211,77,0.2)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#FCD34D]/20 scrollbar-track-transparent",
-    bgImage: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=1200"
+    bgImage: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'firefly', count: 40, speed: [0.5, 1.5], size: [2, 5], drift: true, glow: true, spawnRate: 1 },
+      { type: 'star', count: 50, speed: [0, 0.1], size: [0.5, 2], drift: false, glow: true, spawnRate: 0.2 }
+    ],
+    companion: { type: 'owl', tint: '#FCD34D' }
   },
   barbie: {
     name: "Barbie Dreamworld",
@@ -222,7 +271,7 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     card: "bg-white/60 backdrop-blur-xl border border-[#FDA4AF]/40",
     cardHover: "hover:bg-white/80 hover:border-[#F43F5E]",
     textPrimary: "text-[#881337]", // Royal rose pink
-    textSecondary: "text-[#FB7185]", // Barbie pink
+    textSecondary: "text-[#E11D48]", // Deep Barbie pink for better contrast
     accent: "bg-[#F43F5E] !text-white", // Pop magenta
     accentHover: "hover:bg-[#E11D48]",
     accentLight: "bg-[#FFE4E6]/80",
@@ -233,7 +282,11 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockBg: "bg-white/40 border-[#FFE4E6]",
     analogClockGlow: "shadow-[0_0_20px_rgba(244,63,94,0.15)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#FB7185]/20 scrollbar-track-transparent",
-    bgImage: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=1200"
+    bgImage: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'petal', count: 40, speed: [0.8, 1.5], size: [4, 10], drift: true, glow: true, spawnRate: 2 }
+    ],
+    companion: { type: 'bluebird', tint: '#F43F5E' }
   },
   oswald: {
     name: "Oswald's Inkwell",
@@ -252,15 +305,19 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockBg: "bg-[#27272A]/40 border-[#3F3F46]",
     analogClockGlow: "shadow-[0_0_20px_rgba(56,189,248,0.15)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#3F3F46] scrollbar-track-transparent",
-    bgImage: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1200"
+    bgImage: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'rain', count: 30, speed: [3, 6], size: [1, 2], drift: false, spawnRate: 1 }
+    ],
+    companion: { type: 'octopus', tint: '#0EA5E9' }
   },
   butterfly: {
     name: "Butterfly Sanctuary",
     bg: "bg-[#ECFDF5]", // Ethereal mint green
     card: "bg-white/60 backdrop-blur-xl border border-[#A7F3D0]/40",
     cardHover: "hover:bg-white/80 hover:border-[#10B981]",
-    textPrimary: "text-[#064E3B]", // Emerald green
-    textSecondary: "text-[#34D399]", // Soft jade
+    textPrimary: "text-[#022C22]", // Deep Emerald green for maximum contrast
+    textSecondary: "text-[#047857]", // Darker jade for readability
     accent: "bg-[#059669] !text-white", // Butterfly teal
     accentHover: "hover:bg-[#047857]",
     accentLight: "bg-[#D1FAE5]/80",
@@ -271,7 +328,11 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockBg: "bg-white/40 border-[#D1FAE5]",
     analogClockGlow: "shadow-[0_0_20px_rgba(5,150,105,0.15)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#34D399]/20 scrollbar-track-transparent",
-    bgImage: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1200"
+    bgImage: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'petal', count: 20, speed: [0.5, 1.2], size: [3, 6], drift: true, spawnRate: 1 }
+    ],
+    companion: { type: 'butterfly', tint: '#059669' }
   },
   sunshine: {
     name: "Sunshine Meadow",
@@ -347,7 +408,12 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     analogClockBg: "bg-[#0D0B24]/40 border-[#15123A]",
     analogClockGlow: "shadow-[0_0_20px_rgba(192,132,252,0.25)]",
     scrollbar: "scrollbar-thin scrollbar-thumb-[#C084FC]/20 scrollbar-track-transparent",
-    bgImage: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=1200"
+    bgImage: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'star', count: 80, speed: [0.1, 0.5], size: [1, 3], drift: true, glow: true, spawnRate: 2 },
+      { type: 'snow', count: 20, speed: [0.2, 0.8], size: [2, 4], drift: true, glow: true, spawnRate: 0.5 }
+    ],
+    companion: { type: 'owl', tint: '#C084FC' }
   },
   obsidian_gold: {
     name: "Obsidian Gold",

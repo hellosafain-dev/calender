@@ -8,13 +8,13 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Lock, LogOut, Check, Sparkles, Image as ImageIcon, Upload, Save, Trash2, Copy, FileCode,
   Sliders, Palette, Calendar, Eye, FileText, Music, CloudSun, UserCheck, RefreshCw, X, Download,
-  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2, Pencil, Flower2, Tag, Bell
+  FolderHeart, Key, AlertTriangle, ShieldCheck, Loader2, Pencil, Flower2, Tag, Bell, Heart, ShieldAlert
 } from "lucide-react";
 import { Memory, ThemeType } from "../types.js";
 import { ThemeConfig, THEMES, FLOWERS } from "../lib/themes.js";
 import { API, Session } from "../lib/api.js";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAddMemory, useUpdateMemory, useDeleteMemory } from "../lib/hooks.js";
+import { useAddMemory, useUpdateMemory, useDeleteMemory, useSettings, useUpdateSettings } from "../lib/hooks.js";
 import { requestAndInitPushNotifications } from "../lib/pushUtils.js";
 
 interface SettingsPageProps {
@@ -47,6 +47,8 @@ export default function SettingsPage({
   const { mutateAsync: addMemory } = useAddMemory();
   const { mutateAsync: updateMemory } = useUpdateMemory();
   const { mutateAsync: deleteMemory } = useDeleteMemory();
+  const { data: sData } = useSettings();
+  const { mutateAsync: updateSettings } = useUpdateSettings();
   const queryClient = useQueryClient();
 
   // PWA Install State
@@ -451,63 +453,67 @@ export default function SettingsPage({
         </div>
       </div>
 
-      {/* Settings Navigation Sub-Tabs */}
-      <div className="flex gap-1.5 border-b border-white/15 pb-3 mb-6 overflow-x-auto select-none scrollbar-none">
-        {session.role !== null && (
+      {/* Settings Navigation Sub-Tabs (Apple/OneUI Premium Segmented Style) */}
+      <div className={`flex p-1.5 gap-1.5 bg-black/5 dark:bg-white/5 rounded-2xl overflow-x-auto select-none scrollbar-none border ${theme.border} shadow-inner backdrop-blur-md mb-8`}>
+        {session.role === "admin" && (
           <button
             id="subtab-dashboard"
             onClick={() => setActiveSubTab("dashboard")}
-            className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
+            className={`flex-1 px-4 py-2.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.97] ${
               activeSubTab === "dashboard"
-                ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
-                : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
+                ? `bg-white dark:bg-zinc-800 ${theme.textPrimary} shadow-sm border ${theme.border}`
+                : `text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5`
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className="w-4 h-4" />
             Write Entry
           </button>
         )}
         
-        <button
-          id="subtab-themes"
-          onClick={() => setActiveSubTab("themes")}
-          className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
-            activeSubTab === "themes"
-              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
-              : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
-          }`}
-        >
-          <Palette className="w-3.5 h-3.5" />
-          App Themes
-        </button>
-
-        {session.role !== null && (
+        {session.role === "admin" && (
           <button
-            id="subtab-memories"
-            onClick={() => setActiveSubTab("memories")}
-            className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
-              activeSubTab === "memories"
-                ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
-                : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
+            id="subtab-themes"
+            onClick={() => setActiveSubTab("themes")}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.97] ${
+              activeSubTab === "themes"
+                ? `bg-white dark:bg-zinc-800 ${theme.textPrimary} shadow-sm border ${theme.border}`
+                : `text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5`
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
-            Media Inventory
+            <Palette className="w-4 h-4" />
+            App Themes
           </button>
         )}
 
-        <button
-          id="subtab-security"
-          onClick={() => setActiveSubTab("security")}
-          className={`px-4.5 py-2 rounded-full text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
-            activeSubTab === "security"
-              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-pink-500/15"
-              : `bg-white/5 border ${theme.border} ${theme.textSecondary} hover:${theme.textPrimary}`
-          }`}
-        >
-          <UserCheck className="w-3.5 h-3.5" />
-          Security & Backup
-        </button>
+        {session.role === "admin" && (
+          <button
+            id="subtab-memories"
+            onClick={() => setActiveSubTab("memories")}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.97] ${
+              activeSubTab === "memories"
+                ? `bg-white dark:bg-zinc-800 ${theme.textPrimary} shadow-sm border ${theme.border}`
+                : `text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5`
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            Inventory
+          </button>
+        )}
+
+        {session.role === "admin" && (
+          <button
+            id="subtab-security"
+            onClick={() => setActiveSubTab("security")}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.97] ${
+              activeSubTab === "security"
+                ? `bg-white dark:bg-zinc-800 ${theme.textPrimary} shadow-sm border ${theme.border}`
+                : `text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5`
+            }`}
+          >
+            <UserCheck className="w-4 h-4" />
+            Security
+          </button>
+        )}
       </div>
 
       {/* Sub-Tab Contents */}
@@ -739,7 +745,7 @@ export default function SettingsPage({
         )}
 
         {/* SUBTAB 2: THEME SELECTOR */}
-        {activeSubTab === "themes" && (
+        {activeSubTab === "themes" && session.role === "admin" && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -780,6 +786,112 @@ export default function SettingsPage({
                     transition={{ type: "spring", stiffness: 600, damping: 35 }}
                   />
                 </button>
+              </div>
+
+              {/* Ambient Settings Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                {/* Ambient Animations Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                  <div>
+                    <span className={`text-xs font-black ${theme.textPrimary} flex items-center gap-1.5`}>
+                      <Sparkles className="w-4 h-4 text-emerald-400" />
+                      Ambient Animations
+                    </span>
+                    <p className={`text-[10px] ${theme.textSecondary} mt-1 leading-relaxed`}>
+                      Particles, weather, and daypart lighting effects.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => updateSettings({ ambientAnimations: sData?.ambientAnimations === false ? true : false })}
+                    style={{ width:46, height:26, padding:"3px" }}
+                    className={`relative flex items-center rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
+                      sData?.ambientAnimations !== false ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'bg-gray-700'
+                    }`}
+                  >
+                    <motion.div
+                      layout
+                      className="bg-white w-5 h-5 rounded-full shadow-md"
+                      animate={{ x: sData?.ambientAnimations !== false ? 20 : 0 }}
+                      transition={{ type: "spring", stiffness: 600, damping: 35 }}
+                    />
+                  </button>
+                </div>
+
+                {/* Decorative Companions Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                  <div>
+                    <span className={`text-xs font-black ${theme.textPrimary} flex items-center gap-1.5`}>
+                      <Heart className="w-4 h-4 text-pink-400" />
+                      Decorative Companions
+                    </span>
+                    <p className={`text-[10px] ${theme.textSecondary} mt-1 leading-relaxed`}>
+                      Small animal friends that occasionally appear on screen.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => updateSettings({ companionsEnabled: sData?.companionsEnabled === false ? true : false })}
+                    style={{ width:46, height:26, padding:"3px" }}
+                    className={`relative flex items-center rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
+                      sData?.companionsEnabled !== false ? 'bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.4)]' : 'bg-gray-700'
+                    }`}
+                  >
+                    <motion.div
+                      layout
+                      className="bg-white w-5 h-5 rounded-full shadow-md"
+                      animate={{ x: sData?.companionsEnabled !== false ? 20 : 0 }}
+                      transition={{ type: "spring", stiffness: 600, damping: 35 }}
+                    />
+                  </button>
+                </div>
+
+                {/* Static Background Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                  <div>
+                    <span className={`text-xs font-black ${theme.textPrimary} flex items-center gap-1.5`}>
+                      <ShieldAlert className="w-4 h-4 text-amber-400" />
+                      Static Background
+                    </span>
+                    <p className={`text-[10px] ${theme.textSecondary} mt-1 leading-relaxed`}>
+                      Disable all ambient layers and transitions (Max Battery).
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => updateSettings({ staticBackground: sData?.staticBackground === true ? false : true })}
+                    style={{ width:46, height:26, padding:"3px" }}
+                    className={`relative flex items-center rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
+                      sData?.staticBackground === true ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]' : 'bg-gray-700'
+                    }`}
+                  >
+                    <motion.div
+                      layout
+                      className="bg-white w-5 h-5 rounded-full shadow-md"
+                      animate={{ x: sData?.staticBackground === true ? 20 : 0 }}
+                      transition={{ type: "spring", stiffness: 600, damping: 35 }}
+                    />
+                  </button>
+                </div>
+
+                {/* Particle Density Select */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                  <div>
+                    <span className={`text-xs font-black ${theme.textPrimary} flex items-center gap-1.5`}>
+                      <Sliders className="w-4 h-4 text-blue-400" />
+                      Particle Density
+                    </span>
+                    <p className={`text-[10px] ${theme.textSecondary} mt-1 leading-relaxed`}>
+                      Amount of on-screen weather/particles.
+                    </p>
+                  </div>
+                  <select
+                    value={sData?.particleDensity || 'medium'}
+                    onChange={(e) => updateSettings({ particleDensity: e.target.value as any })}
+                    className={`px-3 py-1.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200`}
+                  >
+                    <option value="low" className="bg-neutral-900 text-white">Low</option>
+                    <option value="medium" className="bg-neutral-900 text-white">Medium</option>
+                    <option value="high" className="bg-neutral-900 text-white">High</option>
+                  </select>
+                </div>
               </div>
 
               {/* Theme Grid */}

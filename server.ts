@@ -24,6 +24,11 @@ import webpush from 'web-push';
 dotenv.config({ path: '.env.local' });
 dotenv.config();
 
+// Prevent third-party SDKs (like Gemini) from crashing the server on rate limits
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Import SQLite database layer
 import {
   memoryQueries,
@@ -219,11 +224,18 @@ app.get('/api/settings', (req, res) => {
     hasAdminPassword: !!getSetting('admin_password'),
     hasViewerPassword: !!getSetting('viewer_password'),
     customGreeting: getSetting('custom_greeting') || '',
+    ambientAnimations: getSetting('ambientAnimations') !== 'false', // Default true
+    particleDensity: getSetting('particleDensity') || 'medium',
+    companionsEnabled: getSetting('companionsEnabled') !== 'false', // Default true
+    staticBackground: getSetting('staticBackground') === 'true', // Default false
   });
 });
 
 app.post('/api/settings', protect, requireAdmin, (req, res) => {
-  const { theme, title, passwordHash, viewerPasswordHash, autoCycle, customGreeting } = req.body;
+  const { 
+    theme, title, passwordHash, viewerPasswordHash, autoCycle, customGreeting,
+    ambientAnimations, particleDensity, companionsEnabled, staticBackground
+  } = req.body;
 
   if (theme && VALID_THEMES.includes(theme)) setSetting('theme', theme);
   if (title && typeof title === 'string' && title.length <= 100) setSetting('title', title.trim());
@@ -238,6 +250,18 @@ app.post('/api/settings', protect, requireAdmin, (req, res) => {
   }
   if (customGreeting !== undefined) {
     setSetting('custom_greeting', String(customGreeting).trim());
+  }
+  if (ambientAnimations !== undefined) {
+    setSetting('ambientAnimations', String(ambientAnimations));
+  }
+  if (particleDensity !== undefined && ['low', 'medium', 'high'].includes(particleDensity)) {
+    setSetting('particleDensity', particleDensity);
+  }
+  if (companionsEnabled !== undefined) {
+    setSetting('companionsEnabled', String(companionsEnabled));
+  }
+  if (staticBackground !== undefined) {
+    setSetting('staticBackground', String(staticBackground));
   }
 
   res.json({ 

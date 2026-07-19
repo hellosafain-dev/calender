@@ -547,6 +547,7 @@ export default function CalendarPage({
 
           {/* Greeting Card */}
           <motion.div
+            data-companion-target="true"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -606,6 +607,7 @@ export default function CalendarPage({
             {todayMemory ? (
               <div 
                 id="today-memory-preview-card"
+                data-companion-target="true"
                 onClick={() => {
                   setSelectedMemory(todayMemory);
                   setActivePhotoIndex(0);

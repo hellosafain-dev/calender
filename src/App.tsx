@@ -22,6 +22,9 @@ import AlarmOverlay from "./components/AlarmOverlay.js";
 import BirthdayCountdown from "./components/BirthdayCountdown.js";
 import BirthdaySurprise from "./components/BirthdaySurprise.js";
 import LockScreen from "./components/LockScreen.js";
+import ParticleEngine from "./components/ambient/ParticleEngine.js";
+import CompanionLayer from "./components/ambient/CompanionLayer.js";
+import LightingLayer from "./components/ambient/LightingLayer.js";
 
 // ─── Constants & Alarm Utils ───────────────────────────────────────────────
 const TYPE_META: Record<string, { gradient: string; label: string; border: string }> = {
@@ -162,6 +165,15 @@ export default function App() {
   const [autoCycle, setAutoCycle] = useState(false);
   const [diaryTitle, setDiaryTitle] = useState("Bloom Diary");
   const [customGreeting, setCustomGreeting] = useState("");
+
+  const ambientAnimations = sData?.ambientAnimations !== false;
+  const particleDensity = sData?.particleDensity || 'medium';
+  const companionsEnabled = sData?.companionsEnabled !== false;
+  const staticBackground = sData?.staticBackground === true;
+
+  const prefersReducedMotion = false; // Bypass OS settings if they explicitly enabled the toggles
+  const isAmbientActive = ambientAnimations && !staticBackground;
+  const isCompanionActive = companionsEnabled && !staticBackground;
 
   // User Authentication & Roles (Admin, Viewer, Guest)
   const [session, setSession] = useState<Session>(() => getSession());
@@ -352,11 +364,10 @@ export default function App() {
 
   // Update document body style when active theme transitions
   useEffect(() => {
-    const currentTheme = THEMES[activeThemeName];
-    // Remove all possible bg classes
+    // We let the animated motion.div handle the background colors now.
     const body = document.body;
     if (body) {
-      body.className = `${currentTheme.bg} transition-colors duration-500 font-sans antialiased text-gray-800 selection:bg-pink-150`;
+      body.className = `bg-zinc-950 font-sans antialiased text-gray-800 selection:bg-pink-150`;
     }
   }, [activeThemeName]);
 
@@ -498,17 +509,30 @@ export default function App() {
   if (!session.role) {
     return (
       <ErrorBoundary fallbackMessage="Garden encountered an error">
-        <div className={`min-h-screen ${currentTheme.bg} transition-colors duration-500 font-sans antialiased text-gray-800 selection:bg-pink-150 relative overflow-x-hidden`}>
-          {currentTheme.bgImage && (
-            <div 
-              className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-1000"
-              style={{ 
-                backgroundImage: `url(${currentTheme.bgImage})`,
-                filter: 'blur(8px) brightness(0.85) saturate(1.2)',
-                transform: 'scale(1.05)'
-              }} 
-            />
-          )}
+        <div className="min-h-screen font-sans antialiased text-gray-800 selection:bg-pink-150 relative overflow-x-hidden">
+          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={activeThemeName}
+                initial={{ y: "100%", opacity: 0, scale: 0.95 }}
+                animate={{ y: "0%", opacity: 1, scale: 1 }}
+                exit={{ y: "-20%", opacity: 0, filter: "blur(10px)", scale: 1.05 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                className={`absolute inset-0 ${currentTheme.bg}`}
+              >
+                {currentTheme.bgImage && (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{ 
+                      backgroundImage: `url(${currentTheme.bgImage})`,
+                      filter: 'blur(8px) brightness(0.85) saturate(1.2)',
+                      transform: 'scale(1.05)'
+                    }} 
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
           <div className="relative z-10 w-full min-h-screen flex items-center justify-center">
              <LockScreen theme={currentTheme} onLoginSuccess={handleLoginSuccess} />
           </div>
@@ -519,18 +543,37 @@ export default function App() {
 
   return (
       <ErrorBoundary fallbackMessage="Garden encountered an error">
-    <div className={`min-h-screen ${currentTheme.bg} pb-24 transition-colors duration-500 relative overflow-x-hidden`}>
-      {/* Dynamic Blurred Theme Background Image */}
-      {currentTheme.bgImage && (
-        <div 
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-1000"
-          style={{ 
-            backgroundImage: `url(${currentTheme.bgImage})`,
-            filter: 'blur(8px) brightness(0.85) saturate(1.2)',
-            transform: 'scale(1.05)' // slight zoom to hide edge artifacts from blur
-          }} 
-        />
-      )}
+    <div className="min-h-screen pb-24 relative overflow-x-hidden">
+      {/* Animated Cinematic Theme Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={activeThemeName}
+            initial={{ y: "100%", opacity: 0, scale: 0.95 }}
+            animate={{ y: "0%", opacity: 1, scale: 1 }}
+            exit={{ y: "-20%", opacity: 0, filter: "blur(10px)", scale: 1.05 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            className={`absolute inset-0 ${currentTheme.bg}`}
+          >
+            {/* Dynamic Blurred Theme Background Image */}
+            {currentTheme.bgImage && (
+              <div 
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ 
+                  backgroundImage: `url(${currentTheme.bgImage})`,
+                  filter: 'blur(8px) brightness(0.85) saturate(1.2)',
+                  transform: 'scale(1.05)'
+                }} 
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Ambient Theme Layers */}
+      <ParticleEngine theme={currentTheme} isActive={isAmbientActive} density={particleDensity} />
+      <CompanionLayer theme={currentTheme} isActive={isCompanionActive} />
+      <LightingLayer theme={currentTheme} isActive={!staticBackground} />
 
       {/* Elegant Dark Ambient Glows */}
       {selectedThemeName === "elegant_dark" && (
@@ -541,8 +584,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Rapunzel Birthday Glowing Lanterns background overlay */}
-      {isBirthday && <GlowingLanterns />}
+      {/* Rapunzel Theme & Birthday Glowing Lanterns background overlay */}
+      {(isBirthday || selectedThemeName === "rapunzel") && <GlowingLanterns />}
 
       {/* Live 10-Minute Birthday Countdown */}
       {!isBirthday && !letterRead && (

@@ -57,5 +57,12 @@ export interface DbSchema {
     passwordHash: string; // For Admin
     viewerPasswordHash: string; // For Viewer
     title: string;
+    autoCycle?: boolean;
+    customGreeting?: string;
+    ambientAnimations?: boolean;
+    particleDensity?: 'low' | 'medium' | 'high';
+    companionsEnabled?: boolean;
+    highContrastMode?: boolean;
+    staticBackground?: boolean;
   };
 }

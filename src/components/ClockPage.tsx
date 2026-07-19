@@ -804,6 +804,7 @@ export default function ClockPage({
               return (
                 <motion.div key={r.id}
                   layout
+                  data-companion-target="true"
                   initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, x:20 }}
                   transition={{ type:"spring", stiffness:350, damping:28 }}
                   className={`rounded-2xl border overflow-hidden transition-all duration-300 ${

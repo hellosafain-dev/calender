@@ -59,13 +59,13 @@ export const API = {
     return data;
   },
 
-  async getSettings(): Promise<{ theme: ThemeType; title: string; autoCycle?: boolean; hasAdminPassword?: boolean; hasViewerPassword?: boolean; customGreeting?: string }> {
+  async getSettings(): Promise<{ theme: ThemeType; title: string; autoCycle?: boolean; hasAdminPassword?: boolean; hasViewerPassword?: boolean; customGreeting?: string; ambientAnimations?: boolean; particleDensity?: 'low' | 'medium' | 'high'; companionsEnabled?: boolean; highContrastMode?: boolean; staticBackground?: boolean }> {
     const res = await resilientFetch(`${BASE_URL}/api/settings`, { headers: authHeaders() });
     if (!res.ok) throw new Error('Failed to load settings');
     return res.json();
   },
 
-  async updateSettings(settings: { theme?: ThemeType; title?: string; passwordHash?: string; viewerPasswordHash?: string; autoCycle?: boolean; customGreeting?: string }): Promise<any> {
+  async updateSettings(settings: { theme?: ThemeType; title?: string; passwordHash?: string; viewerPasswordHash?: string; autoCycle?: boolean; customGreeting?: string; ambientAnimations?: boolean; particleDensity?: 'low' | 'medium' | 'high'; companionsEnabled?: boolean; highContrastMode?: boolean; staticBackground?: boolean }): Promise<any> {
     const res = await resilientFetch(`${BASE_URL}/api/settings`, {
       method: 'POST',
       headers: authHeaders(),

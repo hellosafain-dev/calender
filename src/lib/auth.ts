@@ -12,7 +12,7 @@ export interface Session {
 
 export function getToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    return sessionStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }
@@ -20,7 +20,7 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   try {
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
   } catch {
     console.error('Failed to save token');
   }
@@ -28,8 +28,8 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   try {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
   } catch {
     console.error('Failed to clear token');
   }
@@ -37,7 +37,7 @@ export function clearToken(): void {
 
 export function getSession(): Session {
   try {
-    const saved = localStorage.getItem(SESSION_KEY);
+    const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) return JSON.parse(saved);
   } catch {
     // ignore
@@ -47,7 +47,7 @@ export function getSession(): Session {
 
 export function saveSession(session: Session): void {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   } catch {
     console.error('Failed to save session');
   }

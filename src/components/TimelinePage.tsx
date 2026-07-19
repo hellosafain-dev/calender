@@ -93,6 +93,7 @@ function WatchIcon({ memory, index, onTap, theme }: WatchIconProps) {
       {visible ? (
         <motion.button
           layoutId={`watch-icon-${memory.id}`}
+          data-companion-target="true"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
@@ -353,6 +354,7 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
       {/* ── Empty State ── */}
       {filteredMemories.length === 0 ? (
         <motion.div
+          data-companion-target="true"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-xs mx-auto mt-16 text-center py-12 px-6 rounded-[32px] bg-white/10 backdrop-blur-md border border-white/15 space-y-4"
