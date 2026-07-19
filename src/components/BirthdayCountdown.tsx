@@ -24,13 +24,23 @@ export default function BirthdayCountdown({ targetTimeMs, onUnlock }: BirthdayCo
     return () => clearInterval(interval);
   }, [targetTimeMs, isUnlocked]);
 
-  // Format MM:SS
-  const mins = Math.floor(timeLeft / 60000);
-  const secs = Math.floor((timeLeft % 60000) / 1000);
-  const timeString = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  // Format DD:HH:MM:SS
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+  const mins = Math.floor((timeLeft / 60000) % 60);
+  const secs = Math.floor((timeLeft / 1000) % 60);
+  
+  let timeString = "";
+  if (days > 0) {
+    timeString = `${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m`;
+  } else if (hours > 0) {
+    timeString = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  } else {
+    timeString = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
 
-  // Only show if we are within the last 10 minutes (600,000 ms) and it's not opened yet
-  const showCountdown = timeLeft <= 600000 && timeLeft > 0;
+  // Only show if we are within the last 10 days (864,000,000 ms) and it's not opened yet
+  const showCountdown = timeLeft <= 864000000 && timeLeft > 0;
 
   return (
     <AnimatePresence>

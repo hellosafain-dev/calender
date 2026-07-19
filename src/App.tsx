@@ -181,11 +181,10 @@ export default function App() {
   // Navigation Callback dates (e.g. tapping empty calendar date takes Admin to Write entry with that pre-selected date)
   const [preSelectedDate, setPreSelectedDate] = useState<string | null>(null);
 
-  // Check if today is the special birthday window (July 17, 23:59:00 to July 18, 23:59:59)
+  // Check if today is the special birthday window (July 18, 2027 exactly at midnight to 11:59 PM)
   // or if simulate_birthday=true query param is set
   const getBdayStart = () => {
-    const now = new Date();
-    return new Date(now.getFullYear(), 6, 17, 23, 59, 0).getTime();
+    return new Date(2027, 6, 18, 0, 0, 0).getTime();
   };
 
   const checkIsBirthday = () => {
@@ -193,7 +192,7 @@ export default function App() {
     if (isSimulated) return true;
 
     const bdayStart = getBdayStart();
-    const bdayEnd = new Date(new Date().getFullYear(), 6, 18, 23, 59, 59).getTime();
+    const bdayEnd = new Date(2027, 6, 18, 23, 59, 59).getTime();
     const nowTime = Date.now();
     return nowTime >= bdayStart && nowTime <= bdayEnd;
   };
