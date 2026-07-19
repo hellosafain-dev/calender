@@ -118,17 +118,19 @@ ON CONFLICT (id) DO NOTHING;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 4. STORAGE BUCKETS & POLICIES
 -- ─────────────────────────────────────────────────────────────────────────────
--- Create the 'photos' bucket for memory images if it doesn't exist
+-- Create the 'photos' and 'memories' buckets for memory images if they don't exist
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('photos', 'photos', true)
+VALUES
+  ('photos', 'photos', true),
+  ('memories', 'memories', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Allow public access to view photos
+-- Allow public access to view photos/memories
 CREATE POLICY "Public View Access" 
 ON storage.objects FOR SELECT 
-USING ( bucket_id = 'photos' );
+USING ( bucket_id IN ('photos', 'memories') );
 
--- Allow unrestricted uploads to the photos bucket (since auth is handled by our Vercel API layer)
+-- Allow unrestricted uploads to the photos and memories buckets (since auth is handled by our Vercel API layer)
 CREATE POLICY "Public Upload Access" 
 ON storage.objects FOR INSERT 
-WITH CHECK ( bucket_id = 'photos' );
+WITH CHECK ( bucket_id IN ('photos', 'memories') );
