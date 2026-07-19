@@ -15,13 +15,26 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
   const [isInitialized, setIsInitialized] = useState(false);
   const [facingLeft, setFacingLeft] = useState(true);
 
-  // Initialize default resting position
+  // Initialize default resting position and handle window resizes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setPos({ x: window.innerWidth - 80, y: window.innerHeight - 120 });
+    if (typeof window === 'undefined') return;
+    
+    const updatePosition = () => {
+      setPos(prev => {
+        // If it's near the right edge, keep it near the right edge on resize
+        // Otherwise let it roam where it was
+        if (state !== 'ROAMING') {
+          return { x: window.innerWidth - 80, y: window.innerHeight - 120 };
+        }
+        return prev;
+      });
       setIsInitialized(true);
-    }
-  }, []);
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    return () => window.removeEventListener('resize', updatePosition);
+  }, [state]);
 
   // Main State Machine
   useEffect(() => {
