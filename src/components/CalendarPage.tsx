@@ -427,7 +427,7 @@ export default function CalendarPage({
                   id="calendar-prev-month"
                   disabled={isPrevDisabled}
                   onClick={prevMonthHandler}
-                  className={`p-1.5 xs:p-2 rounded-xl transition-colors hover:${theme.accentLight} disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer text-gray-500 hover:${theme.textPrimary}`}
+                  className={`p-1.5 xs:p-2 rounded-xl transition-colors hover:${theme.accentLight} disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer ${theme.textSecondary} hover:${theme.textPrimary}`}
                 >
                   <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5" />
                 </button>
@@ -435,7 +435,7 @@ export default function CalendarPage({
                   id="calendar-next-month"
                   disabled={isNextDisabled}
                   onClick={nextMonthHandler}
-                  className={`p-1.5 xs:p-2 rounded-xl transition-colors hover:${theme.accentLight} disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer text-gray-500 hover:${theme.textPrimary}`}
+                  className={`p-1.5 xs:p-2 rounded-xl transition-colors hover:${theme.accentLight} disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer ${theme.textSecondary} hover:${theme.textPrimary}`}
                 >
                   <ChevronRight className="w-4 h-4 xs:w-5 xs:h-5" />
                 </button>
@@ -509,7 +509,7 @@ export default function CalendarPage({
                         isToday 
                           ? "text-white font-extrabold" 
                           : memory 
-                            ? "font-bold text-gray-900 dark:text-white" 
+                            ? `font-bold ${theme.textPrimary}`
                             : theme.textSecondary
                       }`}
                     >
@@ -575,14 +575,14 @@ export default function CalendarPage({
             </div>
             
             {/* Quote of the Day */}
-            <div className="mt-4 pt-4 border-t border-dashed border-rose-100">
+            <div className="mt-4 pt-4 border-t border-dashed border-rose-100/30">
               {loadingQuote ? (
                 <div className="h-16 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-[#EC708B] border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p className={`text-sm italic font-medium leading-relaxed text-gray-800 dark:text-gray-200`}>
+                  <p className={`text-sm italic font-medium leading-relaxed ${theme.textPrimary}`}>
                     "{poeticQuote.quote}"
                   </p>
                   <p className="text-[10px] uppercase tracking-widest text-[#EC708B] font-semibold">
@@ -625,7 +625,7 @@ export default function CalendarPage({
                       decoding="async"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 flex items-center gap-1.5 shadow">
+                  <div className="absolute top-2 right-2 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-[#2D2A26] flex items-center gap-1.5 shadow">
                       <Flower2 className={`w-3.5 h-3.5 ${FLOWERS[todayMemory.flowerId]?.iconColor}`} />
                       <span>{FLOWERS[todayMemory.flowerId]?.name}</span>
                     </div>
@@ -772,7 +772,7 @@ export default function CalendarPage({
                   </div>
                   <button
                     onClick={() => setSelectedMemory(null)}
-                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 cursor-pointer"
+                    className={`p-1.5 rounded-full hover:bg-gray-100/10 ${theme.textSecondary} hover:${theme.textPrimary} cursor-pointer`}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -817,7 +817,7 @@ export default function CalendarPage({
                   <h3 className={`text-lg font-extrabold ${theme.textPrimary} tracking-tight font-sans leading-snug`}>
                     {selectedMemory.title}
                   </h3>
-                  <p className={`text-[13px] leading-relaxed text-gray-600 dark:text-gray-300 whitespace-pre-wrap`}>
+                  <p className={`text-[13px] leading-relaxed whitespace-pre-wrap ${theme.textSecondary}`}>
                     {selectedMemory.note}
                   </p>
                 </div>
@@ -922,7 +922,7 @@ export default function CalendarPage({
                 </div>
                 <button
                   onClick={() => setClickedEmptyDate(null)}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 cursor-pointer transition-colors"
+                  className={`p-1.5 rounded-full hover:bg-gray-100/10 ${theme.textSecondary} hover:${theme.textPrimary} cursor-pointer transition-colors`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -971,7 +971,7 @@ export default function CalendarPage({
                 
                 <button
                   onClick={() => setClickedEmptyDate(null)}
-                  className={`w-full py-2.5 rounded-2xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer`}
+                  className={`w-full py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${theme.textSecondary} hover:${theme.textPrimary} hover:bg-white/5`}
                 >
                   Back to Garden
                 </button>
