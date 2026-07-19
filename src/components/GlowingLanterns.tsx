@@ -76,9 +76,10 @@ export default function GlowingLanterns() {
 
             {/* Inner glowing flame */}
             <div
-              className="w-2/5 h-2/5 rounded-full bg-white animate-pulse"
+              className="w-2/5 h-2/5 rounded-full bg-white opacity-90"
               style={{
-                boxShadow: "0 0 12px 4px rgba(255, 255, 255, 1)",
+                boxShadow: "0 0 8px 2px rgba(255, 255, 255, 0.8)",
+                willChange: "opacity"
               }}
             />
 

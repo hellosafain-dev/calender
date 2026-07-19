@@ -549,10 +549,11 @@ export default function App() {
         <AnimatePresence initial={false}>
           <motion.div
             key={activeThemeName}
-            initial={{ y: "100%", opacity: 0, scale: 0.95 }}
-            animate={{ y: "0%", opacity: 1, scale: 1 }}
-            exit={{ y: "-20%", opacity: 0, filter: "blur(10px)", scale: 1.05 }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            exit={{ y: "-20%", opacity: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            style={{ willChange: "transform, opacity" }}
             className={`absolute inset-0 ${currentTheme.bg}`}
           >
             {/* Dynamic Blurred Theme Background Image */}
@@ -562,7 +563,8 @@ export default function App() {
                 style={{ 
                   backgroundImage: `url(${currentTheme.bgImage})`,
                   filter: 'blur(8px) brightness(0.85) saturate(1.2)',
-                  transform: 'scale(1.05)'
+                  transform: 'scale(1.05)',
+                  willChange: 'transform'
                 }} 
               />
             )}
@@ -575,17 +577,39 @@ export default function App() {
       <CompanionLayer theme={currentTheme} isActive={isCompanionActive} />
       <LightingLayer theme={currentTheme} isActive={!staticBackground} />
 
-      {/* Frozen Ambient Glows */}
-      {selectedThemeName === "frozen" && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[130px] opacity-75" />
-          <div className="absolute top-1/4 -right-40 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[110px] opacity-60" />
-          <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-indigo-500/10 rounded-full blur-[120px] opacity-50" />
-        </div>
-      )}
+      {/* Ambient Enhancements with Smooth Transitions */}
+      <AnimatePresence>
+        {/* Frozen Ambient Glows */}
+        {selectedThemeName === "frozen" && (
+          <motion.div 
+            key="frozen-glows"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="fixed inset-0 overflow-hidden pointer-events-none z-0"
+            style={{ willChange: "opacity" }}
+          >
+            <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[130px] opacity-75" />
+            <div className="absolute top-1/4 -right-40 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[110px] opacity-60" />
+            <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-indigo-500/10 rounded-full blur-[120px] opacity-50" />
+          </motion.div>
+        )}
 
-      {/* Rapunzel Theme & Birthday Glowing Lanterns background overlay */}
-      {(isBirthday || selectedThemeName === "rapunzel") && <GlowingLanterns />}
+        {/* Rapunzel Theme & Birthday Glowing Lanterns */}
+        {(isBirthday || selectedThemeName === "rapunzel") && (
+          <motion.div 
+            key="rapunzel-lanterns"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            style={{ willChange: "opacity" }}
+          >
+            <GlowingLanterns />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Live 10-Minute Birthday Countdown */}
       {!isBirthday && !letterRead && (
