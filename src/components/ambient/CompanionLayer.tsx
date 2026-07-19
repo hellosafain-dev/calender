@@ -164,7 +164,7 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
             y: { type: "spring", stiffness: 60, damping: 15 },
             opacity: { duration: 0.3 }
           }}
-          className="fixed top-0 left-0 z-50 pointer-events-auto cursor-pointer filter drop-shadow-md"
+          className="fixed top-0 left-0 z-[55] pointer-events-auto cursor-pointer filter drop-shadow-md"
           onClick={() => setState('ATTENTION')}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}

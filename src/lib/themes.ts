@@ -16,7 +16,7 @@ export interface ParticleDefinition {
 }
 
 export interface CompanionDefinition {
-  type: 'robin' | 'squirrel' | 'seagull' | 'owl' | 'bluebird' | 'fox';
+  type: 'robin' | 'squirrel' | 'seagull' | 'owl' | 'bluebird' | 'fox' | 'olaf' | 'octopus' | 'butterfly';
   tint: string;
 }
 

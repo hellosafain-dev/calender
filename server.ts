@@ -149,9 +149,9 @@ function requireAdmin(req: any, res: any, next: any) {
 const VALID_FLOWERS = ['rose', 'tulip', 'lavender', 'sunflower', 'cherry_blossom', 'jasmine', 'hydrangea', 'peony'] as const;
 const VALID_MOODS = ['peaceful', 'joyful', 'nostalgic', 'romantic', 'grateful', 'calm'] as const;
 const VALID_WEATHER = ['sunny', 'rainy', 'cloudy', 'snowy', 'windy'] as const;
-const VALID_THEMES: ThemeType[] = [
+const VALID_THEMES: (ThemeType | 'elegant_dark')[] = [
   'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean', 'elegant_dark',
-  'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust'
+  'frozen', 'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust', 'obsidian_gold'
 ];
 
 const MemoryCreateSchema = z.object({
