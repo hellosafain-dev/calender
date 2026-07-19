@@ -60,6 +60,7 @@ export default function GlowingLanterns() {
             position: "absolute",
             width: l.size,
             height: l.size * 1.35,
+            willChange: "transform, opacity"
           }}
         >
           {/* Lantern outer shell */}

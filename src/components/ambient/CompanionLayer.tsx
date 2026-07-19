@@ -33,15 +33,22 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
       if (state === 'HIDE') return;
 
       if (state === 'IDLE') {
-        // Stay idle for a bit, then either perform action or roam
-        timeout = setTimeout(() => {
-          const rand = Math.random();
-          if (rand > 0.5) {
-            setState('ROAMING');
-          } else {
-            setState('ACTION');
-          }
-        }, Math.random() * 8000 + 4000); // 4-12 seconds
+        // Only butterfly gets to roam
+        if (theme.companion?.type === 'butterfly') {
+          timeout = setTimeout(() => {
+            const rand = Math.random();
+            if (rand > 0.5) {
+              setState('ROAMING');
+            } else {
+              setState('ACTION');
+            }
+          }, Math.random() * 8000 + 4000); // 4-12 seconds
+        } else {
+          // Others just idle and occasionally do an ACTION if they have one (or just stay IDLE)
+          // Wait, the user said "not other actoion then that", meaning no actions.
+          // We will just do nothing, let them stay IDLE.
+          setFacingLeft(true); // Always face left (viewer)
+        }
       } else if (state === 'ACTION') {
         // Action lasts 2-4s
         timeout = setTimeout(() => {
@@ -152,7 +159,8 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
                 : { y: [0, -3, 0] } // idle breathing
             }
             style={{
-              scaleX: facingLeft ? 1 : -1 // Flip horizontally based on movement
+              scaleX: facingLeft ? 1 : -1, // Flip horizontally based on movement
+              willChange: "transform"
             }}
             transition={{
               duration: state === 'ACTION' ? 0.8 : state === 'ATTENTION' ? 0.5 : state === 'ROAMING' ? 2 : 4,

@@ -620,6 +620,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{ willChange: "transform, opacity" }}
             >
               <CalendarPage
                 memories={memories}
@@ -638,6 +639,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{ willChange: "transform, opacity" }}
             >
               <TimelinePage
                 memories={memories}
@@ -653,6 +655,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{ willChange: "transform, opacity" }}
             >
               <ClockPage
                 reminders={reminders}
@@ -668,6 +671,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{ willChange: "transform, opacity" }}
             >
               <SettingsPage
                 memories={memories}
