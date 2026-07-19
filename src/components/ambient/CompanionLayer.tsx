@@ -24,7 +24,8 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
         // If it's near the right edge, keep it near the right edge on resize
         // Otherwise let it roam where it was
         if (state !== 'ROAMING') {
-          return { x: window.innerWidth - 80, y: window.innerHeight - 120 };
+          // Keep the character high enough (180px from bottom) so it sits safely above the mobile bottom nav bar
+          return { x: window.innerWidth - 80, y: window.innerHeight - 180 };
         }
         return prev;
       });
@@ -75,7 +76,7 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
         // Find a target
         const targets = Array.from(document.querySelectorAll('[data-companion-target="true"]'));
         let newX = window.innerWidth - 80;
-        let newY = window.innerHeight - 120;
+        let newY = window.innerHeight - 180;
         
         if (targets.length > 0) {
           // Pick random target
@@ -89,9 +90,9 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
           newX = Math.max(10, Math.min(newX, window.innerWidth - 70));
           newY = Math.max(10, Math.min(newY, window.innerHeight - 70));
         } else {
-          // Default corner if no targets
+          // Default corner if no targets (elevated above nav bar)
           newX = window.innerWidth - 80 + (Math.random() * 20 - 10);
-          newY = window.innerHeight - 120;
+          newY = window.innerHeight - 180;
         }
 
         // Determine facing direction based on movement
