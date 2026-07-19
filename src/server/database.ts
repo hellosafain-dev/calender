@@ -225,7 +225,7 @@ if (settingsCount === 0) {
   if (!adminPass.startsWith('$2')) adminPass = bcrypt.hashSync(adminPass, 10);
   if (!viewerPass.startsWith('$2')) viewerPass = bcrypt.hashSync(viewerPass, 10);
 
-  insertSetting.run('theme', settings.theme || 'elegant_dark');
+  insertSetting.run('theme', settings.theme || 'frozen');
   insertSetting.run('title', settings.title || 'Bloom Diary');
   insertSetting.run('admin_password', adminPass);
   insertSetting.run('viewer_password', viewerPass);

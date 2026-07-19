@@ -42,7 +42,9 @@ export interface Reminder {
   createdAt: string;
 }
 
-export type ThemeType = 'light' | 'dark' | 'autumn' | 'spring' | 'lavender' | 'cherry' | 'forest' | 'ocean' | 'elegant_dark' | 'rapunzel' | 'barbie' | 'oswald' | 'butterfly' | 'sunshine' | 'gilded_rose' | 'midnight_forest' | 'cosmic_stardust' | 'obsidian_gold';
+export type ThemeType = 'light' | 'dark' | 'autumn' | 'spring' | 'lavender' | 'cherry' | 'forest' | 
+'ocean' | 'frozen' | 'rapunzel' | 'barbie' | 'oswald' | 'butterfly' | 'sunshine' | 'gilded_rose' | 
+'midnight_forest' | 'cosmic_stardust' | 'obsidian_gold';
 
 export interface UserSession {
   role: 'admin' | 'viewer' | null;

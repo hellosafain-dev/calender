@@ -385,12 +385,12 @@ export default function App() {
       cherry: "#EC708B",
       forest: "#4AA685",
       ocean: "#4FADD2",
-      elegant_dark: "#FFFFFF",
+      frozen: "#5E81AC",
       rapunzel: "#FCD34D",
     };
 
     const accentColor = themeColors[activeThemeName] || "#EC708B";
-    const textColor = activeThemeName === "elegant_dark" ? "#000000" : accentColor;
+    const textColor = accentColor;
 
     // Render an SVG favicon representing the calendar icon with the correct date
     const svg = `
@@ -575,12 +575,12 @@ export default function App() {
       <CompanionLayer theme={currentTheme} isActive={isCompanionActive} />
       <LightingLayer theme={currentTheme} isActive={!staticBackground} />
 
-      {/* Elegant Dark Ambient Glows */}
-      {selectedThemeName === "elegant_dark" && (
+      {/* Frozen Ambient Glows */}
+      {selectedThemeName === "frozen" && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-rose-950/20 rounded-full blur-[130px] opacity-75" />
-          <div className="absolute top-1/4 -right-40 w-[400px] h-[400px] bg-amber-950/15 rounded-full blur-[110px] opacity-60" />
-          <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-red-950/10 rounded-full blur-[120px] opacity-50" />
+          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[130px] opacity-75" />
+          <div className="absolute top-1/4 -right-40 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[110px] opacity-60" />
+          <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-indigo-500/10 rounded-full blur-[120px] opacity-50" />
         </div>
       )}
 

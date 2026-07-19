@@ -182,6 +182,60 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
               </>
             )}
 
+            {/* ── OLAF (Frozen) ── */}
+            {type === 'olaf' && (
+              <motion.g
+                animate={
+                  state === 'ACTION' || state === 'ROAMING'
+                    ? { y: [0, -3, 0], scaleY: [1, 1.05, 1], transition: { repeat: Infinity, duration: 0.5 } }
+                    : { y: [0, -1, 0], transition: { repeat: Infinity, duration: 3 } }
+                }
+              >
+                {/* Body Bottom */}
+                <circle cx="50" cy="75" r="20" fill={tint} stroke="#CBD5E1" strokeWidth="1" />
+                {/* Body Middle */}
+                <circle cx="50" cy="50" r="15" fill={tint} stroke="#CBD5E1" strokeWidth="1" />
+                {/* Head */}
+                <ellipse cx="50" cy="25" rx="12" ry="18" fill={tint} stroke="#CBD5E1" strokeWidth="1" />
+                
+                {/* Coal Buttons */}
+                <circle cx="50" cy="45" r="2.5" fill="#111" />
+                <circle cx="50" cy="55" r="3" fill="#111" />
+                <circle cx="50" cy="70" r="3.5" fill="#111" />
+                
+                {/* Stick Arms */}
+                <motion.g
+                  animate={
+                    state === 'ACTION' || state === 'ROAMING'
+                      ? { rotate: [-15, 15, -15], transformOrigin: "35px 50px", transition: { repeat: Infinity, duration: 0.4 } }
+                      : { rotate: [0, -5, 0], transformOrigin: "35px 50px", transition: { repeat: Infinity, duration: 3 } }
+                  }
+                >
+                  <path d="M 36 50 L 15 40 M 20 42 L 15 35" stroke="#5C4033" strokeWidth="2" strokeLinecap="round" fill="none" />
+                </motion.g>
+                <motion.g
+                  animate={
+                    state === 'ACTION' || state === 'ROAMING'
+                      ? { rotate: [15, -15, 15], transformOrigin: "65px 50px", transition: { repeat: Infinity, duration: 0.4 } }
+                      : { rotate: [0, 5, 0], transformOrigin: "65px 50px", transition: { repeat: Infinity, duration: 3 } }
+                  }
+                >
+                  <path d="M 64 50 L 85 40 M 80 42 L 85 35" stroke="#5C4033" strokeWidth="2" strokeLinecap="round" fill="none" />
+                </motion.g>
+
+                {/* Face */}
+                <circle cx="45" cy="20" r="2.5" fill="#111" />
+                <circle cx="55" cy="20" r="2.5" fill="#111" />
+                {/* Carrot Nose */}
+                <path d="M 50 25 L 65 30 L 50 32 Z" fill="#F97316" />
+                {/* Tooth */}
+                <rect x="47" y="35" width="6" height="4" fill="#FFF" stroke="#CBD5E1" strokeWidth="0.5" />
+                
+                {/* Hair Twigs */}
+                <path d="M 50 7 L 48 -5 M 50 7 L 55 0 M 50 7 L 45 2" stroke="#5C4033" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+              </motion.g>
+            )}
+
             {/* ── BUTTERFLY (Butterfly Sanctuary) ── */}
             {type === 'butterfly' && (
               <motion.g
@@ -207,7 +261,7 @@ export default function CompanionLayer({ theme, isActive = true }: CompanionLaye
             )}
 
             {/* ── DEFAULT / BIRDS / ANIMALS ── */}
-            {type !== 'octopus' && type !== 'butterfly' && (
+            {type !== 'octopus' && type !== 'olaf' && type !== 'butterfly' && (
               <>
                 <circle cx="50" cy="60" r="30" fill={tint} opacity="0.9" />
                 

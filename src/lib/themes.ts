@@ -222,24 +222,28 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
     ],
     companion: { type: 'seagull', tint: '#ECF3FA' }
   },
-  elegant_dark: {
-    name: "Elegant Dark",
-    bg: "bg-[#0D0D0D]",
-    card: "bg-white/5 border border-white/10 backdrop-blur-xl rounded-[32px]",
-    cardHover: "hover:bg-white/10 hover:border-white/20",
-    textPrimary: "text-[#E0E0E0]",
-    textSecondary: "text-white/60",
-    accent: "bg-white !text-black",
-    accentHover: "hover:bg-white/90",
-    accentLight: "bg-white/10",
-    accentText: "text-white",
-    border: "border-white/10",
-    shadow: "shadow-2xl",
-    glow: "shadow-[0_0_30px_rgba(255,255,255,0.15)]",
-    analogClockBg: "bg-white/5 border-white/10",
-    analogClockGlow: "shadow-[0_0_20px_rgba(255,255,255,0.08)]",
-    scrollbar: "scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent",
-    bgImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200",
+  frozen: {
+    name: "Frozen Arendelle",
+    bg: "bg-[#0A192F]", // Deep icy blue
+    card: "bg-white/10 border border-[#88C0D0]/30 backdrop-blur-xl rounded-[32px]",
+    cardHover: "hover:bg-white/20 hover:border-[#88C0D0]/50",
+    textPrimary: "text-[#ECEFF4]",
+    textSecondary: "text-[#88C0D0]",
+    accent: "bg-[#5E81AC] !text-white",
+    accentHover: "hover:bg-[#81A1C1]",
+    accentLight: "bg-[#5E81AC]/20",
+    accentText: "text-[#ECEFF4]",
+    border: "border-[#88C0D0]/30",
+    shadow: "shadow-[0_8px_32px_rgba(10,25,47,0.7)]",
+    glow: "shadow-[0_0_30px_rgba(136,192,208,0.25)]",
+    analogClockBg: "bg-white/5 border-[#88C0D0]/30",
+    analogClockGlow: "shadow-[0_0_20px_rgba(136,192,208,0.15)]",
+    scrollbar: "scrollbar-thin scrollbar-thumb-[#88C0D0]/30 scrollbar-track-transparent",
+    bgImage: "https://images.unsplash.com/photo-1548074987-a2f07d2c3df4?auto=format&fit=crop&q=80&w=1200",
+    ambient: [
+      { type: 'snow', count: 60, speed: [0.2, 0.8], size: [2, 5], drift: true, glow: true, spawnRate: 2 }
+    ],
+    companion: { type: 'olaf', tint: '#ECEFF4' }
   },
   rapunzel: {
     name: "Rapunzel's Tower",

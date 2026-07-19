@@ -11,12 +11,8 @@ export default function DynamicCalendarIcon({ theme, className = "w-6 h-6", dayN
   const today = new Date();
   const displayDay = dayNumber !== undefined ? dayNumber : today.getDate();
 
-  // If theme is elegant_dark, accent is 'bg-white !text-black', so let's parse it safely
   const bgClass = theme.accent;
-  const isElegantDark = theme.name === "Elegant Dark";
-  
-  // Use a text color that matches the theme accent text
-  const textClass = isElegantDark ? "text-neutral-900" : (theme.accentText || "text-pink-500");
+  const textClass = theme.accentText || "text-white";
 
   return (
     <div className={`relative ${bgClass} rounded-[28%] aspect-square flex items-center justify-center p-[12%] shadow-sm ${className}`}>
