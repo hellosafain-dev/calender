@@ -560,7 +560,7 @@ export default function ClockPage({
             <div className={`absolute inset-0 rounded-full ${theme.analogClockGlow} blur-xl opacity-60 pointer-events-none`} />
             <div className={`w-44 h-44 sm:w-52 sm:h-52 rounded-full relative flex items-center justify-center ${theme.analogClockBg} shadow-2xl border-2 border-white/25 backdrop-blur-xl z-10`}>
               {[...Array(12)].map((_,i) => (
-                <div key={i} className="absolute text-[9px] sm:text-[10px] font-bold text-gray-400 select-none"
+                <div key={i} className={`absolute text-[9px] sm:text-[10px] font-bold ${theme.textSecondary} select-none`}
                   style={{ transform: `rotate(${i*30}deg) translateY(-${window.innerWidth < 640 ? 75 : 90}px) rotate(-${i*30}deg)` }}>
                   {i === 0 ? "12" : i}
                 </div>
@@ -621,12 +621,12 @@ export default function ClockPage({
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAskAI(); } }}
               placeholder={"Describe your reminder naturally…\n\nExamples:\n• Remind me to take my medicine every morning at 8am\n• Our anniversary is August 5, remind me yearly\n• Fajr prayer every day at 5:15 am"}
               rows={5}
-              className={`w-full px-4 py-3 pb-12 text-xs rounded-2xl bg-transparent ${theme.textPrimary} placeholder-gray-500 focus:outline-none resize-none`}
+              className={`w-full px-4 py-3 pb-12 text-xs rounded-2xl bg-transparent ${theme.textPrimary} placeholder-slate-400/70 focus:outline-none resize-none`}
             />
             <div className="absolute bottom-3 right-3 flex gap-2">
               {aiInput && (
                 <button onClick={() => { setAiInput(""); setAiSuggestion(null); }}
-                  className="p-1.5 rounded-full text-gray-400 hover:text-gray-200 transition-colors">
+                  className={`p-1.5 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}>
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -651,15 +651,15 @@ export default function ClockPage({
                   <div className="flex-1">
                     <p className={`text-sm font-bold ${theme.textPrimary}`}>{aiSuggestion.title}</p>
                     <div className="flex flex-wrap gap-2 mt-1.5">
-                      <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70">
+                      <span className={`px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold ${theme.textPrimary}`}>
                         {aiSuggestion.time}
                       </span>
                       {aiSuggestion.date && (
-                        <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70">
+                        <span className={`px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold ${theme.textPrimary}`}>
                           <CalendarDays className="w-3 h-3 inline" /> {aiSuggestion.date}
                         </span>
                       )}
-                      <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-white/70 capitalize">
+                      <span className={`px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold ${theme.textPrimary} capitalize`}>
                         <Repeat className="w-3 h-3 inline" /> {REPEAT_LABELS[aiSuggestion.repeat]}
                       </span>
                       <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold bg-gradient-to-r ${TYPE_META[aiSuggestion.type as Reminder["type"]]?.gradient} bg-opacity-20 text-white border-white/20`}>
@@ -667,7 +667,7 @@ export default function ClockPage({
                       </span>
                     </div>
                   </div>
-                  <button onClick={() => setAiSuggestion(null)} className="text-gray-500 hover:text-gray-300 transition-colors mt-0.5">
+                  <button onClick={() => setAiSuggestion(null)} className={`transition-colors mt-0.5 ${theme.textSecondary} hover:${theme.textPrimary}`}>
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -766,10 +766,10 @@ export default function ClockPage({
 
         {/* Search */}
         <div className="relative mb-3">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${theme.textSecondary}`} />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search reminders…"
-            className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border ${theme.border} bg-white/5 ${theme.textPrimary} placeholder-gray-500 focus:outline-none focus:border-pink-400`} />
+            className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border ${theme.border} bg-white/5 ${theme.textPrimary} placeholder-slate-400/70 focus:outline-none focus:border-pink-400`} />
         </div>
 
         {/* Filter tabs */}
@@ -819,18 +819,18 @@ export default function ClockPage({
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold truncate transition-all flex items-center gap-1.5 ${r.isActive ? theme.textPrimary : "text-gray-500 line-through"}`}>
+                      <p className={`text-xs font-bold truncate transition-all flex items-center gap-1.5 ${r.isActive ? theme.textPrimary : `opacity-40 ${theme.textPrimary} line-through`}`}>
                         {r.title.split("|")[0].trim()}
                         {r.title.includes("|") && (
                           <Mail className="w-3 h-3 text-pink-400 inline shrink-0" />
                         )}
                       </p>
                       <div className="flex items-center flex-wrap gap-1.5 mt-1">
-                        <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : "text-gray-600"}`}>
+                        <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : `opacity-50 ${theme.textSecondary}`}`}>
                           <Clock className="w-3 h-3 inline" /> {r.time}
                         </span>
                         {r.date && (
-                          <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : "text-gray-600"}`}>
+                          <span className={`text-[10px] font-semibold ${r.isActive ? theme.textSecondary : `opacity-50 ${theme.textSecondary}`}`}>
                             <CalendarDays className="w-3 h-3 inline" /> {r.date}
                           </span>
                         )}
@@ -838,7 +838,7 @@ export default function ClockPage({
                           <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider border transition-all ${
                             r.isActive
                               ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                              : "bg-gray-800/30 text-gray-600 border-gray-700/20"
+                              : `bg-white/5 opacity-50 ${theme.textSecondary} border-white/10`
                           }`}>
                             <Repeat className="w-3 h-3 inline" /> {REPEAT_LABELS[r.repeat]}
                           </span>
@@ -856,18 +856,18 @@ export default function ClockPage({
                           className={`relative flex items-center rounded-full transition-all duration-300 active:scale-90 ${
                             r.isActive
                               ? "bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.55)]"
-                              : "bg-gray-600/50"
+                              : "bg-black/40"
                           }`}>
                           <motion.div
                             layout
                             animate={{ x: r.isActive ? 22 : 0 }}
                             transition={{ type:"spring", stiffness:600, damping:35 }}
                             className={`w-5 h-5 rounded-full shadow-md flex items-center justify-center transition-colors ${
-                              r.isActive ? "bg-white" : "bg-gray-300"
+                              r.isActive ? "bg-white" : "bg-gray-400"
                             }`}
                           />
                         </button>
-                        <span className={`text-[8px] font-black tracking-widest uppercase ${r.isActive ? "text-emerald-400" : "text-gray-500"}`}>
+                        <span className={`text-[8px] font-black tracking-widest uppercase ${r.isActive ? "text-emerald-400" : theme.textSecondary}`}>
                           {r.isActive ? "ON" : "OFF"}
                         </span>
                       </div>
@@ -1151,7 +1151,7 @@ export default function ClockPage({
             className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all active:scale-95 shadow-sm text-xs font-black ${
               activeSubTab === 0 
                 ? "bg-[#EC708B]/10 border-[#EC708B]/35 text-[#EC708B] hover:bg-[#EC708B]/15" 
-                : "bg-white/5 border-white/10 text-gray-400 hover:text-[#EC708B] hover:border-[#EC708B]/30"
+                : `bg-white/5 border-white/10 hover:text-[#EC708B] hover:border-[#EC708B]/30 ${theme.textSecondary}`
             }`}
           >
             {activeSubTab === 0 ? (

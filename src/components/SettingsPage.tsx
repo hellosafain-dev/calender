@@ -597,7 +597,7 @@ export default function SettingsPage({
                   <select
                     value={formFlower}
                     onChange={(e) => setFormFlower(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 ${theme.textPrimary}`}
                   >
                     {Object.entries(FLOWERS).map(([fId, fObj]) => (
                       <option key={fId} value={fId} className="bg-neutral-900 text-white">
@@ -612,7 +612,7 @@ export default function SettingsPage({
                   <select
                     value={formMood}
                     onChange={(e) => setFormMood(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 ${theme.textPrimary}`}
                   >
                     <option value="peaceful" className="bg-neutral-900 text-white">Peaceful</option>
                     <option value="joyful" className="bg-neutral-900 text-white">Joyful</option>
@@ -628,7 +628,7 @@ export default function SettingsPage({
                   <select
                     value={formWeather}
                     onChange={(e) => setFormWeather(e.target.value)}
-                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200 focus:border-pink-500`}
+                    className={`w-full px-3 py-2.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none focus:border-pink-500 ${theme.textPrimary}`}
                   >
                     <option value="sunny" className="bg-neutral-900 text-white">Sunny</option>
                     <option value="rainy" className="bg-neutral-900 text-white">Rainy</option>
@@ -885,7 +885,7 @@ export default function SettingsPage({
                   <select
                     value={sData?.particleDensity || 'medium'}
                     onChange={(e) => updateSettings({ particleDensity: e.target.value as any })}
-                    className={`px-3 py-1.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none text-gray-800 dark:text-gray-200`}
+                    className={`px-3 py-1.5 text-xs rounded-xl border ${theme.border} bg-white/5 outline-none ${theme.textPrimary}`}
                   >
                     <option value="low" className="bg-neutral-900 text-white">Low</option>
                     <option value="medium" className="bg-neutral-900 text-white">Medium</option>
@@ -1000,7 +1000,7 @@ export default function SettingsPage({
                       <button
                         id={`duplicate-memory-${m.id}`}
                         onClick={() => handleDuplicateMemory(m)}
-                        className="p-2 text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl cursor-pointer transition-colors active:scale-90"
+                        className={`p-2 ${theme.textSecondary} hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl cursor-pointer transition-colors active:scale-90`}
                         title="Duplicate"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -1010,7 +1010,7 @@ export default function SettingsPage({
                       <button
                         id={`delete-memory-${m.id}`}
                         onClick={() => handleDeleteMemory(m.id)}
-                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl cursor-pointer transition-colors active:scale-90"
+                        className={`p-2 ${theme.textSecondary} hover:text-red-400 hover:bg-red-500/10 rounded-xl cursor-pointer transition-colors active:scale-90`}
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
