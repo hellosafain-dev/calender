@@ -42,6 +42,7 @@ import {
 
 import { ThemeType } from './src/types.js';
 import { FLOWERS } from './src/lib/themes.js';
+import vercelApiHandler from './api/index.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000');
@@ -150,8 +151,8 @@ const VALID_FLOWERS = ['rose', 'tulip', 'lavender', 'sunflower', 'cherry_blossom
 const VALID_MOODS = ['peaceful', 'joyful', 'nostalgic', 'romantic', 'grateful', 'calm'] as const;
 const VALID_WEATHER = ['sunny', 'rainy', 'cloudy', 'snowy', 'windy'] as const;
 const VALID_THEMES: ThemeType[] = [
-  'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean', 'elegant_dark',
-  'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust'
+  'light', 'dark', 'autumn', 'spring', 'lavender', 'cherry', 'forest', 'ocean', 'frozen',
+  'rapunzel', 'barbie', 'oswald', 'butterfly', 'sunshine', 'gilded_rose', 'midnight_forest', 'cosmic_stardust', 'obsidian_gold'
 ];
 
 const MemoryCreateSchema = z.object({
@@ -186,7 +187,22 @@ function generateId(prefix: string): string {
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// Health check (public)
+// ─── Supabase Cloud Routing Switch ─────────────────────────────────────────────
+if (process.env.SUPABASE_URL && (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY)) {
+  console.log('⚡ Using Cloud Supabase Postgres database & storage for all API routes');
+  app.all('/api/*', async (req, res) => {
+    try {
+      await vercelApiHandler(req as any, res as any);
+    } catch (err: any) {
+      console.error('Supabase API Handler Error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Internal Server Error', details: err.message });
+      }
+    }
+  });
+}
+
+// Health check (public - local SQLite fallback)
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'healthy', database: 'SQLite (WAL)', version: '2.0.0' });
 });
@@ -748,6 +764,7 @@ function notifyFlowerUpdate(flowerId: string, title: string) {
 const triggeredReminders: Record<string, string> = {};
 
 function checkRemindersAndPush() {
+  if (process.env.SUPABASE_URL) return;
   try {
     const now = new Date();
     const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;

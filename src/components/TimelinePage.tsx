@@ -88,6 +88,12 @@ function WatchIcon({ memory, index, onTap, theme }: WatchIconProps) {
   const coverImg = memory.photos[0] || getUnsplashFlowerUrl(memory.flowerId);
   const flower = FLOWERS[memory.flowerId];
 
+  const [yStr, mStr, dStr] = memory.date.split("-");
+  const monthDay = `${mStr}-${dStr}`;
+  const isPrincessBday = monthDay === "07-18";
+  const isSograBday = monthDay === "07-25";
+  const isProposalAnniv = monthDay === "10-30";
+
   return (
     <div ref={ref} className="flex items-center justify-center">
       {visible ? (
@@ -149,9 +155,15 @@ function WatchIcon({ memory, index, onTap, theme }: WatchIconProps) {
             >
               {day}
             </span>
-            {flower && (
+            {isPrincessBday ? (
+              <span className="text-[11px] sm:text-xs drop-shadow animate-bounce">🦋🎂</span>
+            ) : isSograBday ? (
+              <span className="text-[11px] sm:text-xs drop-shadow animate-pulse">🎂🎉</span>
+            ) : isProposalAnniv ? (
+              <span className="text-[11px] sm:text-xs drop-shadow animate-pulse">💍❤️</span>
+            ) : flower ? (
               <Flower2 className={`w-3.5 h-3.5 ${flower.iconColor}`} />
-            )}
+            ) : null}
           </div>
 
           {/* Favorite crown ring */}
@@ -264,10 +276,10 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
       <div className="px-5 pt-8 pb-4 flex items-center justify-between">
         <div>
           <h2 className={`text-xl font-black tracking-tight ${theme.textPrimary}`}>
-            Memory Garden
+            Anniversary & Memory Archive
           </h2>
           <p className={`text-xs font-semibold mt-0.5 ${theme.textSecondary}`}>
-            {filteredMemories.length} moment{filteredMemories.length !== 1 ? "s" : ""} bloomed
+            {filteredMemories.length} milestone{filteredMemories.length !== 1 ? "s" : ""} & moments preserved
           </p>
         </div>
         <button
@@ -365,8 +377,8 @@ export default function TimelinePage({ memories, theme }: TimelinePageProps) {
           </h3>
           <p className={`text-xs ${theme.textSecondary} leading-relaxed`}>
             {hasActiveFilters
-              ? "Try adjusting your filters."
-              : "Your first memory will appear here from October 18th onwards."}
+              ? "Try adjusting your custom filter parameters."
+              : "Your cherished romantic journey and historic timeline unfold here, starting from June 2019 onwards."}
           </p>
         </motion.div>
       ) : (

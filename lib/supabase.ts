@@ -1,6 +1,9 @@
 /**
  * Supabase client for Vercel serverless functions (production cloud database)
  */
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;

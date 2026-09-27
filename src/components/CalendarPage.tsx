@@ -120,9 +120,9 @@ export default function CalendarPage({
   const { mutateAsync: toggleFavorite } = useToggleFavorite();
   // Current month being viewed on the calendar
   const today = new Date();
-  const currentYearOfToday = 2025; // Base year set to 2025 as requested
-  const minDate = new Date(currentYearOfToday, 9, 18); // October 18, 2025
-  const maxDate = new Date(currentYearOfToday + 30, 9, 18); // October 18, 2055
+  const currentYearOfToday = 2019; // Base origin set to 2019 as requested (where everything started)
+  const minDate = new Date(2019, 5, 1); // June 1, 2019
+  const maxDate = new Date(2055, 11, 31); // December 31, 2055
 
   const checkIsBirthday = () => {
     const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
@@ -217,17 +217,17 @@ export default function CalendarPage({
     loadWeather();
   }, []);
 
-  // Convert a YYYY-MM-DD string to a unique day index (relative to October 18, currentYear)
+  // Convert a YYYY-MM-DD string to a unique day index (relative to June 1, 2019)
   const getDayIndex = (dateStr: string): number => {
     const d = new Date(dateStr + "T00:00:00");
-    const start = new Date(currentYearOfToday, 9, 18);
+    const start = new Date(2019, 5, 1);
     const diffTime = d.getTime() - start.getTime();
     return Math.round(diffTime / (1000 * 60 * 60 * 24));
   };
 
   // Convert a unique day index back to a YYYY-MM-DD string
   const getDateStrFromIndex = (index: number): string => {
-    const start = new Date(currentYearOfToday, 9, 18);
+    const start = new Date(2019, 5, 1);
     const d = new Date(start.getTime() + index * 24 * 60 * 60 * 1000);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -415,11 +415,11 @@ export default function CalendarPage({
             {/* Samsung Calendar Header */}
             <div className="flex items-center justify-between mb-4 px-1 xs:px-2">
               <div className="flex flex-col min-w-0">
-                <h2 className={`text-base xs:text-xl sm:text-2xl font-bold font-sans truncate ${theme.textPrimary}`}>
+                <h2 className={`text-base xs:text-xl sm:text-2xl font-black font-sans tracking-tight ${theme.textPrimary}`}>
                   {monthsList[currentMonth]} {currentYear}
                 </h2>
-                <span className={`text-[9px] xs:text-[10px] uppercase tracking-wider ${theme.textSecondary}`}>
-                  Memory Tracker
+                <span className={`text-[9px] xs:text-[10px] uppercase tracking-widest font-extrabold text-amber-500/90`}>
+                  Executive Memory Vault & Anniversary Archive
                 </span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
@@ -460,8 +460,13 @@ export default function CalendarPage({
                 const memory = getMemoryForDate(day.dateStr);
                 const flower = memory ? FLOWERS[memory.flowerId] : null;
                 const isToday = day.dateStr === todayDateStr;
+                const [yStr, mStr, dStr] = day.dateStr.split("-");
+                const monthDay = `${mStr}-${dStr}`;
+                const isPrincessBday = monthDay === "07-18";
+                const isSograBday = monthDay === "07-25";
+                const isProposalAnniv = monthDay === "10-30";
 
-                // Determine if date is within October 18, currentYear to October 18, currentYear + 30
+                // Determine if date is within June 1, 2019 to December 31, 2055
                 const dayDate = new Date(day.dateStr + "T00:00:00");
                 const minMidnight = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
                 const maxMidnight = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
@@ -491,7 +496,13 @@ export default function CalendarPage({
                     } ${
                       isToday 
                         ? `bg-gradient-to-tr from-[#EC708B] to-pink-400 text-white font-extrabold shadow-[0_0_15px_3px_rgba(236,112,139,0.5)] ring-1 xs:ring-2 sm:ring-4 ring-[#EC708B] ring-offset-1 sm:ring-offset-2 dark:ring-offset-gray-900 z-10 hover:scale-105 active:scale-95 border border-white/40` 
-                        : "hover:bg-pink-50/50 dark:hover:bg-pink-950/20"
+                        : isPrincessBday
+                          ? "bg-gradient-to-br from-amber-500/20 via-rose-500/20 to-purple-500/20 border-2 border-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.4)] z-0 hover:scale-105"
+                          : isSograBday
+                            ? "bg-gradient-to-br from-pink-500/20 via-purple-500/15 to-blue-500/15 border-2 border-pink-400/70 shadow-[0_0_10px_rgba(244,114,182,0.3)] z-0 hover:scale-105"
+                            : isProposalAnniv
+                              ? "bg-gradient-to-br from-rose-600/20 via-red-500/20 to-pink-500/20 border-2 border-rose-500/80 shadow-[0_0_12px_rgba(244,63,122,0.4)] z-0 hover:scale-105"
+                              : "hover:bg-pink-50/50 dark:hover:bg-pink-950/20"
                     } ${
                       !isWithinRange ? "opacity-35" : ""
                     }`}
@@ -508,7 +519,7 @@ export default function CalendarPage({
                       className={`text-[9px] xs:text-xs sm:text-sm font-semibold block ${
                         isToday 
                           ? "text-white font-extrabold" 
-                          : memory 
+                          : memory || isPrincessBday || isSograBday || isProposalAnniv
                             ? "font-bold text-gray-900 dark:text-white" 
                             : theme.textSecondary
                       }`}
@@ -516,9 +527,24 @@ export default function CalendarPage({
                       {day.dayNum}
                     </span>
 
-                    {/* Flower Blooming Indicator */}
-                    <div className="h-3 xs:h-5 flex items-center justify-center mt-0.5">
-                      {flower ? (
+                    {/* Special Milestone Emoji Badges & Flower Indicator */}
+                    <div className="h-3 xs:h-5 flex items-center justify-center mt-0.5 gap-0.5">
+                      {isPrincessBday && (
+                        <span className="text-[10px] xs:text-xs sm:text-sm animate-bounce filter drop-shadow-md" title="The Bestest Day — Happy Birthday My Princess!">
+                          🦋🎂
+                        </span>
+                      )}
+                      {isSograBday && !isPrincessBday && (
+                        <span className="text-[10px] xs:text-xs sm:text-sm animate-pulse filter drop-shadow-md" title="Sograapi's Birthday">
+                          🎂🎉
+                        </span>
+                      )}
+                      {isProposalAnniv && !isPrincessBday && !isSograBday && (
+                        <span className="text-[10px] xs:text-xs sm:text-sm animate-pulse filter drop-shadow-md" title="Proposal Anniversary — Where Our Promise Began">
+                          💍❤️
+                        </span>
+                      )}
+                      {flower && !isPrincessBday && !isSograBday && !isProposalAnniv ? (
                         <motion.div
                           initial={{ scale: 0, rotate: -45 }}
                           animate={{ scale: 1, rotate: 0 }}
@@ -528,9 +554,9 @@ export default function CalendarPage({
                         >
                           <Flower2 className={`w-3.5 h-3.5 ${flower.iconColor}`} />
                         </motion.div>
-                      ) : (
+                      ) : !isPrincessBday && !isSograBday && !isProposalAnniv ? (
                         <div className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-700 opacity-0" />
-                      )}
+                      ) : null}
                     </div>
                   </button>
                 );

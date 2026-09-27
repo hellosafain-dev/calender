@@ -23,7 +23,7 @@ export default function BirthdaySurprise({ onClose }: BirthdaySurpriseProps) {
         {/* Subtle ribbon decoration */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-amber-400 to-amber-600 text-white px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
           <Heart className="w-3.5 h-3.5 fill-current" />
-          For My Sweetheart
+          For My Princess
         </div>
 
         {/* Elegant Close Cross */}
@@ -38,27 +38,27 @@ export default function BirthdaySurprise({ onClose }: BirthdaySurpriseProps) {
         <div className="space-y-6 text-center mt-4">
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-black text-amber-900 tracking-tight flex items-center justify-center gap-1">
-              Happy Birthday, My Sweetheart!
+              Happy Birthday, My Princess! 🦋
               <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
             </h2>
-            <p className="text-[10px] uppercase tracking-widest text-amber-700/60 font-sans font-bold">
-              July 18, 2026
+            <p className="text-[10px] uppercase tracking-widest text-amber-700/80 font-sans font-extrabold">
+              July 18, {new Date().getFullYear()} — The Bestest Day
             </p>
           </div>
 
           <hr className="border-t border-dashed border-amber-900/10" />
 
           <div className="text-left space-y-4 text-sm leading-relaxed text-amber-950/90 font-medium whitespace-pre-line italic px-2 sm:px-4">
-            My Dearest,
+            My Dearest Princess,
 
-            From the moment you stepped into my life, you turned every ordinary day into a garden in full bloom. Your laughter is my favorite melody, and your happiness is my greatest treasure.
+            From the magical beginning in June 2019, you transformed my world into an endless, enchanting garden in full bloom. Your laughter is my favorite melody, and your cherished presence is my greatest treasure.
 
-            Today, on your special day, I want you to know how deeply you are loved. May your year be filled with as much light, joy, and beauty as you bring into my world every single day.
+            Today, on July 18th — the bestest day of the entire year — I celebrate the wonder and beauty of you. May your path be ever illuminated with boundless peace, unshakeable joy, and enduring love.
 
-            Happy Birthday, my butterfly, my beautiful flower, my sweetheart, my love, my sunshine, my rainbow, my absolute everything.
+            Happy Birthday to my butterfly, my beautiful flower, my precious chamcham, my sunshine, my dream come true, and my absolute everything. 🦋🎂
 
-            Forever Yours,
-            <Heart className="w-5 h-5 text-red-500 fill-current inline-block" />
+            Forever & Always Yours,
+            <Heart className="w-5 h-5 text-red-500 fill-current inline-block ml-1.5" />
           </div>
 
           <hr className="border-t border-dashed border-amber-900/10" />

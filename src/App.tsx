@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Memory, Reminder, ThemeType } from "./types.js";
@@ -154,11 +154,73 @@ export default function App() {
 
   // Application Data States
   const { data: memories = [], isLoading: isMemoriesLoading, isError: isMemoriesError } = useMemories();
+
+  // Programmatic generation of recurring annual milestones from June 2019 to 2055
+  const enhancedMemories = useMemo(() => {
+    const milestones: Memory[] = [];
+    const currentYear = new Date().getFullYear();
+    const endYear = Math.max(currentYear + 30, 2055);
+
+    for (let y = 2019; y <= endYear; y++) {
+      // July 18: Princess Birthday Milestone
+      milestones.push({
+        id: `milestone-bday-princess-${y}`,
+        date: `${y}-07-18`,
+        title: "The Bestest Day — Happy Birthday My Princess 🦋🎂",
+        note: "Happy birthday my princess! Greeting my beautiful butterfly on the bestest day of the year. You make every moment magical and turn ordinary days into an enchanting garden of everlasting love. 🦋🎂",
+        flowerId: "rose",
+        mood: "romantic",
+        tags: ["birthday", "princess", "milestone"],
+        photos: [],
+        isFavorite: true,
+        isDraft: false,
+        createdAt: `${y}-07-18T00:00:00Z`,
+        updatedAt: `${y}-07-18T00:00:00Z`,
+      });
+
+      // July 25: Sograapi Birthday Milestone
+      milestones.push({
+        id: `milestone-bday-sograapi-${y}`,
+        date: `${y}-07-25`,
+        title: "Sograapi's Birthday 🎂🎉",
+        note: "Wishing a truly wonderful and joyous birthday to Sograapi! May this unforgettable day bring immense happiness, radiant health, peace, and cherished blessings. 🎂🎉",
+        flowerId: "tulip",
+        mood: "joyful",
+        tags: ["birthday", "sograapi", "celebration"],
+        photos: [],
+        isFavorite: false,
+        isDraft: false,
+        createdAt: `${y}-07-25T00:00:00Z`,
+        updatedAt: `${y}-07-25T00:00:00Z`,
+      });
+
+      // October 30: Proposal Anniversary Milestone
+      milestones.push({
+        id: `milestone-proposal-${y}`,
+        date: `${y}-10-30`,
+        title: "Proposal Anniversary — The Day Our Promise Began 💍❤️",
+        note: "On this monumental day, October 30th, I asked the most vital question of my life and proposed to my beloved princess. Celebrating our everlasting vow of loyalty, devotion, and unending love. 💍❤️",
+        flowerId: "cherry_blossom",
+        mood: "romantic",
+        tags: ["anniversary", "proposal", "romance"],
+        photos: [],
+        isFavorite: true,
+        isDraft: false,
+        createdAt: `${y}-10-30T00:00:00Z`,
+        updatedAt: `${y}-10-30T00:00:00Z`,
+      });
+    }
+
+    const existingDates = new Set(memories.map(m => m.date));
+    const newMilestones = milestones.filter(m => !existingDates.has(m.date));
+    return [...memories, ...newMilestones];
+  }, [memories]);
+
   const { data: reminders = [], isLoading: isRemindersLoading, isError: isRemindersError } = useReminders();
   const { data: sData, isLoading: isSettingsLoading, isError: isSettingsError } = useSettings();
   
   const loading = isMemoriesLoading || isRemindersLoading || isSettingsLoading;
-  const error = (isMemoriesError || isRemindersError || isSettingsError) ? "Failed to coordinate data with our digital garden server. Please refresh." : null;
+  const error = (isMemoriesError || isRemindersError || isSettingsError) ? "Unable to synchronize memory records with the secure database archive. Please check your network connection and refresh." : null;
   const { mutateAsync: updateSettings } = useUpdateSettings();
 
   const [selectedThemeName, setSelectedThemeName] = useState<ThemeType>("cherry");
@@ -181,18 +243,24 @@ export default function App() {
   // Navigation Callback dates (e.g. tapping empty calendar date takes Admin to Write entry with that pre-selected date)
   const [preSelectedDate, setPreSelectedDate] = useState<string | null>(null);
 
-  // Check if today is the special birthday window (July 18, 2027 exactly at midnight to 11:59 PM)
-  // or if simulate_birthday=true query param is set
+  // Check if today is the special birthday window (July 18 exactly at midnight to 11:59 PM)
   const getBdayStart = () => {
-    return new Date(2027, 6, 18, 0, 0, 0).getTime();
+    const nowYear = new Date().getFullYear();
+    const bdayEnd = new Date(nowYear, 6, 18, 23, 59, 59, 999).getTime();
+    // If this year's July 18 birthday window has already passed, target next year
+    if (Date.now() > bdayEnd) {
+      return new Date(nowYear + 1, 6, 18, 0, 0, 0).getTime();
+    }
+    return new Date(nowYear, 6, 18, 0, 0, 0).getTime();
   };
 
   const checkIsBirthday = () => {
     const isSimulated = new URLSearchParams(window.location.search).get("simulate_birthday") === "true";
     if (isSimulated) return true;
 
-    const bdayStart = getBdayStart();
-    const bdayEnd = new Date(2027, 6, 18, 23, 59, 59).getTime();
+    const nowYear = new Date().getFullYear();
+    const bdayStart = new Date(nowYear, 6, 18, 0, 0, 0).getTime();
+    const bdayEnd = new Date(nowYear, 6, 18, 23, 59, 59).getTime();
     const nowTime = Date.now();
     return nowTime >= bdayStart && nowTime <= bdayEnd;
   };
@@ -471,7 +539,7 @@ export default function App() {
 
 
 
-  if (loading && !memories.length) {
+  if (loading && !enhancedMemories.length) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#FDF8F8] text-[#855D5D] gap-3">
         <motion.div
@@ -481,7 +549,7 @@ export default function App() {
           <Flower className="w-12 h-12 text-[#EC708B] animate-pulse" />
         </motion.div>
         <span className="text-sm font-medium tracking-widest uppercase animate-pulse">
-          Bloom Diary Loading...
+          Initializing Digital Garden Archive...
         </span>
       </div>
     );
@@ -492,7 +560,7 @@ export default function App() {
       <div className="fixed inset-0 flex flex-col items-center justify-center p-6 text-center bg-red-50 text-red-600 space-y-4">
         <ShieldAlert className="w-12 h-12" />
         <div>
-          <h2 className="text-xl font-bold">Garden Server Offline</h2>
+          <h2 className="text-xl font-bold">Archive Synchronicity Offline</h2>
           <p className="text-sm text-red-500 max-w-md mt-2">{error}</p>
         </div>
         <button
@@ -646,7 +714,7 @@ export default function App() {
               style={{ willChange: "transform, opacity" }}
             >
               <CalendarPage
-                memories={memories}
+                memories={enhancedMemories}
                 theme={currentTheme}
                 session={session}
                 onNavigateToSettingsWithDate={handleNavigateToSettingsWithDate}
@@ -665,7 +733,7 @@ export default function App() {
               style={{ willChange: "transform, opacity" }}
             >
               <TimelinePage
-                memories={memories}
+                memories={enhancedMemories}
                 theme={currentTheme}
               />
             </motion.div>
@@ -697,7 +765,7 @@ export default function App() {
               style={{ willChange: "transform, opacity" }}
             >
               <SettingsPage
-                memories={memories}
+                memories={enhancedMemories}
                 theme={currentTheme}
                 selectedThemeName={selectedThemeName}
                 onChangeTheme={handleThemeChange}

@@ -83,7 +83,7 @@ export const config = {
 };
 
 const VALID_THEMES = [
-  'light','dark','autumn','spring','lavender','cherry','forest','ocean','elegant_dark',
+  'light','dark','autumn','spring','lavender','cherry','forest','ocean','frozen',
   'rapunzel','barbie','oswald','butterfly','sunshine','gilded_rose','midnight_forest','cosmic_stardust','obsidian_gold'
 ];
 
@@ -151,12 +151,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const map: Record<string, string> = {};
       (data || []).forEach((r: any) => { map[r.key] = r.value; });
       return res.json({
-        theme: map['theme'] || 'elegant_dark',
+        theme: map['theme'] || 'cherry',
         title: map['title'] || 'Bloom Diary',
         autoCycle: map['autoCycle'] === 'true',
-        hasAdminPassword: !!map['admin_password'],
-        hasViewerPassword: !!map['viewer_password'],
+        hasAdminPassword: !map['admin_password'],
+        hasViewerPassword: !map['viewer_password'],
         customGreeting: map['custom_greeting'] || '',
+        ambientAnimations: map['ambientAnimations'] !== 'false',
+        particleDensity: map['particleDensity'] || 'medium',
+        companionsEnabled: map['companionsEnabled'] !== 'false',
+        staticBackground: map['staticBackground'] === 'true',
       });
     }
 
@@ -164,7 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const user = requireAdmin(req, res);
       if (!user) return;
 
-      const { theme, title, passwordHash, viewerPasswordHash, autoCycle, customGreeting } = req.body;
+      const { theme, title, passwordHash, viewerPasswordHash, autoCycle, customGreeting, ambientAnimations, particleDensity, companionsEnabled, staticBackground } = req.body;
       const updates: any[] = [];
 
       if (theme && VALID_THEMES.includes(theme)) updates.push({ key: 'theme', value: theme });
@@ -173,6 +177,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (viewerPasswordHash) updates.push({ key: 'viewer_password', value: bcrypt.hashSync(viewerPasswordHash, 10) });
       if (autoCycle !== undefined) updates.push({ key: 'autoCycle', value: String(autoCycle) });
       if (customGreeting !== undefined) updates.push({ key: 'custom_greeting', value: String(customGreeting).trim() });
+      if (ambientAnimations !== undefined) updates.push({ key: 'ambientAnimations', value: String(ambientAnimations) });
+      if (particleDensity) updates.push({ key: 'particleDensity', value: String(particleDensity) });
+      if (companionsEnabled !== undefined) updates.push({ key: 'companionsEnabled', value: String(companionsEnabled) });
+      if (staticBackground !== undefined) updates.push({ key: 'staticBackground', value: String(staticBackground) });
 
       for (const u of updates) {
         await supabase.from('settings').upsert(u, { onConflict: 'key' });
@@ -187,6 +195,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         title: map['title'],
         autoCycle: map['autoCycle'] === 'true',
         customGreeting: map['custom_greeting'] || '',
+        ambientAnimations: map['ambientAnimations'] !== 'false',
+        particleDensity: map['particleDensity'] || 'medium',
+        companionsEnabled: map['companionsEnabled'] !== 'false',
+        staticBackground: map['staticBackground'] === 'true',
       });
     }
 
